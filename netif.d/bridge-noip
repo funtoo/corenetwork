@@ -1,0 +1,29 @@
+#!/sbin/runscript
+
+depend() {
+	config "$CONFD"
+	[ -n "$SLAVES" ] && need $SLAVES
+}
+
+start() {
+	local SLAVE
+	ebegin "$STARTD"
+	brctl addbr $INT
+	if [ -n "$SLAVES" ]
+	then
+		for SLAVE in ${SLAVES//netif./}
+		do
+			brctl addif $INT ${SLAVE}
+		done
+	fi	
+	brctl setfd $INT 0 && \
+	ifconfig $INT up && \
+	eend $?
+}
+
+stop() {
+	ebegin "$STOPD"
+	ifconfig $INT down && \
+	brctl delbr $INT
+	eend $?
+}

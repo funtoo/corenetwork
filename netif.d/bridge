@@ -1,0 +1,38 @@
+#!/sbin/runscript 
+
+depend() {
+	config "$CONFD"
+	[ -n "$slaves" ] && need $slaves
+}
+
+start() {
+	local SLAVE
+	ebegin "$STARTD"
+
+	# 1. CREATE BRIDGE, ADD SLAVE DEVICES, set FORWARDING DELAY TO 0
+	brctl addbr $interface || die "Couldn't create bridge $interface"
+	if [ -n "$slaves" ]
+	then
+		for slave in ${slaves//netif./}
+		do
+			brctl addif $interface $slave || die "Couldn't add slave $slave to bridge $interface"
+		done
+	fi
+	brctl setfd $interface 0 || die "Couldn't set forwarding delay to zero on bridge $interface"
+
+	# 2. CONFIGURE INTERFACE
+	ip link set $interface up || die "Couldn't bring $interface up"
+	[ -n "$mtu" ] && { ip link set dev $interface mtu $mtu || die "Couldn't set MTU on $interface to $mtu"; }
+        ezroute add
+	ezresolv add
+	eend 0
+}
+
+stop() {
+	ebegin "$STOPD"
+	ezresolv del
+	ezroute del
+	ip link set $interface down || die "Couldn't bring $interface down"
+	brctl delbr $interface
+	eend 0
+}

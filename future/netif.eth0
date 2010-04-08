@@ -1,0 +1,14 @@
+info {
+	template: 	interface
+	description: 	LAN
+}
+
+interface {
+	ipaddr:		166.3.244.231/24
+	nameservers: 	166.3.68.1
+	domain:		fs.fed.us
+}
+
+route {
+	default: 	166.244.254
+}

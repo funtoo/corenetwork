@@ -1,0 +1,15 @@
+depend() {
+	config "$CONFD"
+}
+
+start() {
+	ebegin "$STARTD"
+	ifconfig $INT 0.0.0.0 up
+	eend $?
+}
+
+stop() {
+	ebegin "$STOPD"
+	ifconfig $INT down
+	eend $?
+}

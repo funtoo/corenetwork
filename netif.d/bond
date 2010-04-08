@@ -1,0 +1,28 @@
+
+depend() {
+	config "$CONFD"
+	need $SLAVES
+}
+
+start() {
+	ebegin "$STARTD"
+	require SLAVES
+	ifconfig $INT 0.0.0.0 up
+	if [ -n "$MTU" ]
+	then
+		ifconfig $INT mtu $MTU
+		for SLAVE in ${SLAVES//netif./}
+		do
+			ifconfig $SLAVE mtu $MTU || eend $? 
+		done
+	fi
+	ifenslave $INT ${SLAVES//netif./}
+	eend $?
+}
+
+stop() {
+	ebegin "$STOPD"
+	ifenslave -d $INT ${SLAVES//netif./} &&
+	ifconfig $INT down
+	eend $?
+}

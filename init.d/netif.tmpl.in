@@ -1,0 +1,68 @@
+#!/sbin/runscript
+# Copyright (c) 2007-2009 Funtoo Technologies
+# All rights reserved. Released under the 2-clause BSD license.
+
+# TODO - generate cached templates for /etc/init.d/foo, use them for starting and stopping
+# rather than running "live" commands. This way "stop" will work correctly.
+
+INT=${RC_SVCNAME##*.}
+interface=${interface:-INT}
+
+[ "$interface" = "tmpl" ] && exit 0
+
+[ -z "$template" ] && \\
+	eerror "Please specify a template (template=) for $RC_SVCNAME in /etc/conf.d/$interface" && \\
+	exit 1
+
+BLUE="[34;01m"
+CYAN="[36;01m"
+CYANN="[36m"
+GREEN="[32;01m"
+RED="[31;01m"
+PURP="[35;01m"
+YEL="[33;01m"
+BOLD="[01m"
+OFF="[0m"
+
+cachedir="/var/cache/netif.d/$interface/"
+install -d -m0755 "$cachedir"
+
+CONFD="/etc/conf.d/$RC_SVCNAME"
+
+if [ -n "$description" ]
+then
+	DESC1="$interface${OFF}"
+	DESC2="${CYAN}${description}${OFF}"
+else
+	DESC1="$interface${OFF}"
+	DESC2="${CYANN}${template}${OFF}"
+fi
+STARTD="Interface $DESC1 ${GREEN}up${OFF} - $DESC2"
+STOPD="Interface $DESC1 ${RED}down${OFF} - $DESC2"
+TPATH="/etc/netif.d/$template"
+
+require() {
+	local missing=""
+	for envname in $*
+	do
+		[ -z "${!envname}" ] && missing="$missing $envname"
+	done
+	if [ -n "$missing" ]
+	then
+		echo
+		eerror "ERROR: Required variable(s) are missing from ${CYAN}$CONFD${OFF}:"
+		eerror ""
+		for miss in $missing
+		do
+			eerror "    ${CYAN}$miss${OFF}"
+		done
+		eerror ""
+		eerror "Please correct ${CYAN}$CONFD${OFF} to address this issue."
+		echo
+		exit 1
+	fi
+}
+
+. /etc/netif.d/common.sh
+. $TPATH
+

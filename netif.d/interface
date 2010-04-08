@@ -1,0 +1,21 @@
+#!/sbin/runscript 
+
+start() {
+	ebegin "$STARTD"
+	ip link set $interface up || die "Couldn't bring $interface up"
+	for ipnm in $ipaddrs
+	do
+		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+	done
+	ezroute add; ezresolv add
+	eend $?
+}
+
+stop() {
+	ebegin "$STOPD"
+	ezresolv del
+	ezroute del
+	ip link set $interface down || die "Couldn't bring $INT down"
+	brctl delbr $interface
+	eend 0
+}

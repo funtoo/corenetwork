@@ -1,0 +1,25 @@
+int {
+	: eth0
+	ipaddr 207.66.127.100/24
+	domain funtoo.org
+	nameservers 129.121.254.1 129.121.254.2
+	gateway default
+}
+
+start [
+	ip link set $[int] up
+	{% for ipaddr in int.ipaddr %}
+	ip addr add $[int.ipaddr] dev $[int]
+	{% end %}
+	{% if int.gateway == "default" %} 
+	ip route add default dev $[int]
+	{% end %}
+	resolvconf -a $[<<resolvconf.expand()]
+]
+
+resolvconf [
+	domain $[int.domain?]
+	{% for ns in int.nameservers %}
+	nameserver $[ns]
+	{% end %}
+]
