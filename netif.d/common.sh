@@ -1,14 +1,13 @@
 #!/sbin/runscript
 
-domain=${domain:-DOM}
-nameservers=${nameservers}
-ipaddrs=${ipaddrs:-IP}
-netmask=${netmask:-NM}
-slaves=${slaves:-SLAVES}
-mtu=${mtu:-MTU}
+domain=${domain:-$DOM}
+ipaddrs=${ipaddrs:-$IP}
+netmask=${netmask:-$NM}
+slaves=${slaves:-$SLAVES}
+mtu=${mtu:-$MTU}
 
 depend() {
-	config "$CONFD"
+	config "$settings"
 }
 
 die() {
@@ -41,6 +40,7 @@ ezroute() {
 	then
 		qipr $1 default dev $interface
 	elif [ -n "$gateway" ]
+	then
 		qipr $1 $gateway dev $interface
 	fi
 }

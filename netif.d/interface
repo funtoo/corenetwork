@@ -16,6 +16,5 @@ stop() {
 	ezresolv del
 	ezroute del
 	ip link set $interface down || die "Couldn't bring $INT down"
-	brctl delbr $interface
 	eend 0
 }
