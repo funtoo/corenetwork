@@ -1,6 +1,6 @@
 
 depend() {
-	config "$CONFD"
+	config "$settings"
 	need $slaves
 }
 

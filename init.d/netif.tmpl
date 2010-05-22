@@ -71,5 +71,13 @@ require() {
 	fi
 }
 
+die() {
+	eend 1 "$*"; exit 1
+}
+
+depend() {
+	config "$settings"
+}
+
 . /etc/netif.d/common.sh
 . $src_template

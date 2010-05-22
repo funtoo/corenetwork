@@ -3,7 +3,7 @@
 start() {
 	ebegin "$STARTD"
 	ip link set $interface up || die "Couldn't bring $interface up"
-	for ipnm in $ipaddrs
+	for ipnm in $ipaddr $ipaddrs
 	do
 		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
 	done

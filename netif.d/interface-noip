@@ -1,5 +1,5 @@
 depend() {
-	config "$CONFD"
+	config "$settings"
 }
 
 start() {

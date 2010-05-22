@@ -6,14 +6,6 @@ netmask=${netmask:-$NM}
 slaves=${slaves:-$SLAVES}
 mtu=${mtu:-$MTU}
 
-depend() {
-	config "$settings"
-}
-
-die() {
-	eend 1 "$*"; exit 1
-}
-
 ezdns() {
 	# This function generates a resolv.conf entry, which ezresolv() passes to resolvconf
 	[ -n "$domain" ] && echo "domain $domain"
