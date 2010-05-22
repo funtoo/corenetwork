@@ -2,28 +2,28 @@
 
 depend() {
 	config "$CONFD"
-	[ -n "$SLAVES" ] && need $SLAVES
+	[ -n "$slaves" ] && need $slaves
 }
 
 start() {
-	local SLAVE
+	local slave
 	ebegin "$STARTD"
-	brctl addbr $INT
-	if [ -n "$SLAVES" ]
+	brctl addbr $interface
+	if [ -n "$slaves" ]
 	then
-		for SLAVE in ${SLAVES//netif./}
+		for slave in ${slaves//netif./}
 		do
-			brctl addif $INT ${SLAVE}
+			brctl addif $interface ${slave}
 		done
 	fi	
-	brctl setfd $INT 0 && \
-	ifconfig $INT up && \
+	brctl setfd $interface 0 && \
+	ip link set $interface up && \
 	eend $?
 }
 
 stop() {
 	ebegin "$STOPD"
-	ifconfig $INT down && \
-	brctl delbr $INT
+	ip link set $interface down && \
+	brctl delbr $interface
 	eend $?
 }

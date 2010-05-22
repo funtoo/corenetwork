@@ -1,17 +1,18 @@
 #!/sbin/runscript
-# Copyright (c) 2007-2009 Roy Marples <roy@marples.name>
+# Copyright 2010 Funtoo Technologies
 # All rights reserved. Released under the 2-clause BSD license.
 
 start() {
         ebegin "Bringing up network interface lo"
-        ifconfig lo 127.0.0.1 netmask 255.0.0.0 up && \
-        route add -net 127.0.0.0 netmask 255.0.0.0 dev lo
+	ip link set lo up
+	ip addr add 127.0.0.1/8 dev lo brd + scope host
+	ip route add 127.0.0.0/8 dev lo scope host
         eend $?
 }
 
 stop() {
         ebegin "Shutting down network interface lo"
-        route del -net 127.0.0.0 netmask 255.0.0.0 dev lo &&
-        ifconfig lo down
+	ip route del 127.0.0.0/8 dev lo scope host
+        ip link set lo down
         eend $?
 }

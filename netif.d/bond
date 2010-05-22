@@ -1,28 +1,28 @@
 
 depend() {
 	config "$CONFD"
-	need $SLAVES
+	need $slaves
 }
 
 start() {
 	ebegin "$STARTD"
-	require SLAVES
-	ifconfig $INT 0.0.0.0 up
-	if [ -n "$MTU" ]
+	ip link set $interface up
+	ip addr add 0.0.0.0 dev $interface
+	if [ -n "$mtu" ]
 	then
-		ifconfig $INT mtu $MTU
-		for SLAVE in ${SLAVES//netif./}
+		ip link set $interface mtu $mtu
+		for slave in ${slaves//netif./}
 		do
-			ifconfig $SLAVE mtu $MTU || eend $? 
+			ip link set $slave mtu $mtu || eend $?
 		done
 	fi
-	ifenslave $INT ${SLAVES//netif./}
+	ifenslave $interface ${slaves//netif./}
 	eend $?
 }
 
 stop() {
 	ebegin "$STOPD"
-	ifenslave -d $INT ${SLAVES//netif./} &&
-	ifconfig $INT down
+	ifenslave -d $INT ${slaves//netif./}
+	ip link set $interface down || die "Couldn't bring $interface down"
 	eend $?
 }

@@ -15,6 +15,6 @@ stop() {
 	ebegin "$STOPD"
 	ezresolv del
 	ezroute del
-	ip link set $interface down || die "Couldn't bring $INT down"
+	ip link set $interface down || die "Couldn't bring $interface down"
 	eend 0
 }

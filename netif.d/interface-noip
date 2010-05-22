@@ -4,12 +4,13 @@ depend() {
 
 start() {
 	ebegin "$STARTD"
-	ifconfig $INT 0.0.0.0 up
+	ip link set $interface up
+	ip addr add 0.0.0.0 dev $interface
 	eend $?
 }
 
 stop() {
 	ebegin "$STOPD"
-	ifconfig $INT down
+	ip link set $interface down
 	eend $?
 }
