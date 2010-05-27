@@ -10,13 +10,15 @@ start() {
 
 	# First, create bridge, add optional slave interfaces:
 
-	brctl addbr $interface || die "Couldn't create bridge $interface"
+	brctl addbr $interface 
+	#|| die "Couldn't create bridge $interface"
 	if [ -n "$slaves" ]
 	then
 		local slave
 		for slave in ${slaves//netif./}
 		do
-			brctl addif $interface $slave || die "Couldn't add slave $slave to bridge $interface"
+			brctl addif $interface $slave
+			#|| die "Couldn't add slave $slave to bridge $interface"
 		done
 	fi
 
@@ -27,10 +29,14 @@ start() {
 	# Configure interface:
 	
 	ip link set $interface up || die "Couldn't bring $interface up"
+	for ipnm in $ipaddr $ipaddrs
+	do
+		echo "ADDING $IPNM TO $INTERFACE"
+		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+	done
+	ezroute add; ezresolv add
 	[ -n "$mtu" ] && { ip link set dev $interface mtu $mtu || die "Couldn't set MTU on $interface to $mtu"; }
-        ezroute add
-	ezresolv add
-	eend 0
+      	eend 0
 }
 
 stop() {

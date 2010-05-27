@@ -1,10 +1,15 @@
 #!/sbin/runscript
 
 domain=${domain:-$DOM}
-ipaddrs=${ipaddrs:-$IP}
+if [ -n "$IP" ]
+then
+	ipaddr=$IP/$NM
+fi
 netmask=${netmask:-$NM}
 slaves=${slaves:-$SLAVES}
 mtu=${mtu:-$MTU}
+nameservers="${nameservers:-$NS1 $NS2}"
+gateway=${gateway:-$GW}
 
 ezdns() {
 	# This function generates a resolv.conf entry, which ezresolv() passes to resolvconf
@@ -33,7 +38,7 @@ ezroute() {
 		qipr $1 default dev $interface
 	elif [ -n "$gateway" ]
 	then
-		qipr $1 $gateway dev $interface
+		qipr $1 default via $gateway
 	fi
 }
 

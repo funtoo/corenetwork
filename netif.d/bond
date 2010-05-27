@@ -6,7 +6,7 @@ depend() {
 
 start() {
 	ebegin "$STARTD"
-	require $slaves
+	require slaves
 	ip link set $interface up
 	ip addr add 0.0.0.0 dev $interface
 	if [ -n "$mtu" ]

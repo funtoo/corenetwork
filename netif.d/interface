@@ -5,6 +5,7 @@ start() {
 	ip link set $interface up || die "Couldn't bring $interface up"
 	for ipnm in $ipaddr $ipaddrs
 	do
+		echo "ADDING $IPNM TO $INTERFACE"
 		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
 	done
 	ezroute add; ezresolv add
