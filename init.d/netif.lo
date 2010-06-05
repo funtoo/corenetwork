@@ -5,7 +5,6 @@
 start() {
         ebegin "Bringing up network interface lo"
 	ip link set lo up
-	ip addr add 127.0.0.1/8 dev lo brd + scope host
 	ip route add 127.0.0.0/8 dev lo scope host
         eend $?
 }
