@@ -1,13 +1,13 @@
-#!/sbin/runscript 
+#!/bin/bash
 
 start() {
 	ebegin "$STARTD"
-	ip link set $interface up || die "Couldn't bring $interface up"
+	ip addr flush dev $interface
 	for ipnm in $ipaddr $ipaddrs
 	do
-		echo "ADDING $IPNM TO $INTERFACE"
 		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
 	done
+	ip link set $interface up || die "Couldn't bring $interface up"
 	ezroute add; ezresolv add
 	eend $?
 }
@@ -15,6 +15,7 @@ start() {
 stop() {
 	ebegin "$STOPD"
 	ezresolv del; ezroute del
-	ip link set $interface down || die "Couldn't bring $interface down"
+	ip link set $interface down 
+	ip addr flush dev $interface
 	eend 0
 }

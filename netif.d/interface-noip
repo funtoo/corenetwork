@@ -1,16 +1,17 @@
-depend() {
-	config "$settings"
-}
+#!/bin/bash
 
 start() {
 	ebegin "$STARTD"
-	ip link set $interface up
+	ip addr flush dev $interface
+	# needed? :
 	ip addr add 0.0.0.0 dev $interface
+	ip link set $interface up
 	eend $?
 }
 
 stop() {
 	ebegin "$STOPD"
 	ip link set $interface down
+	ip addr flush dev $interface
 	eend $?
 }
