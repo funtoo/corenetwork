@@ -1,7 +1,6 @@
 #!/sbin/runscript
 
-depend() {
-	config "$settings"
+netif_depend() {
 	[ -n "$slaves" ] && need $slaves
 }
 

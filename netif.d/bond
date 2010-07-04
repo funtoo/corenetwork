@@ -1,6 +1,5 @@
 
-depend() {
-	config "$settings"
+netif_depend() {
 	need $slaves
 }
 

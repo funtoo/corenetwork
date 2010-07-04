@@ -75,7 +75,15 @@ die() {
 	eend 1 "$*"; exit 1
 }
 
+depend() {
+	config "$settings"
+	need root
+	# call netif_depend function... if it exists
+	declare -f netif_depend > /dev/null
+	[ $? -eq 0 ] && netif_depend
+
+}
+
 . /etc/netif.d/common.sh
-config "$settings"
-need root
+
 . $src_template
