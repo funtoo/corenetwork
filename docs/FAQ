@@ -1,0 +1,77 @@
+
+core-netif differences
+======================
+
+In Funtoo Linux, the ``/etc/netif.d`` directory contains modular network configuration templates
+-------------------------------------------------------------------------------------------------
+
+The modular template system allows for simpler, purpose-built network interface
+configuration scripts to be created, rather than having a monolithic "one size
+fits all" universal network script as in Gentoo and OpenRC.  These
+lighter-weight network configuration scripts can be more easily read,
+understood -- and modified if desired. This approach is much more extensible.
+
+In Funtoo Linux, network interface configuration scripts are named ``netif.*`` rather than ``net.*``
+------------------------------------------------------------------------------------------------------
+
+In Funtoo Linux, ``/etc/init.d/net`` is a dummy script that serves a single purpose
+-- to satisfy dependencies for all initscripts that ``need net``. Funtoo
+network interface scripts are named ``/etc/init.d/netif.*``.  
+
+In Funtoo Linux, network interfaces must be added to your default runlevel to be enabled.
+-------------------------------------------------------------------------------------------
+
+.. Note:: There is an exception from this rule, ``netif.lo`` which brings up loopback interface must be in ``boot`` runlevel.
+
+Gentoo Linux has the unfortunate behavior of starting **all** network
+interfaces and DHCP clients found in ``/etc/init.d`` when something needs
+``net``, whether or not you've added these network interfaces or DHCP clients
+to your current runlevel. This is due to the way the ``net`` initscript
+dependency is implemented, and works against the elegant, modular runlevel
+design of Gentoo and Funtoo initscripts. 
+
+In Funtoo Linux, if you want a network interface to be started in a runlevel,
+you must manually add it to that runlevel by typing::
+
+        # rc-update add netif.eth0 default
+
+This allows different runlevels to have different network interfaces enabled or
+disabled.  In Funtoo Linux, ``dhcpcd`` also needs to be added to your current
+runlevel in order to enable it::
+
+        # rc-update add dhcpcd default
+
+In Funtoo Linux, stopping a single network interface does not stop all network-dependent services.
+---------------------------------------------------------------------------------------------------
+
+In Gentoo, if you stop ``net.eth0``, all network-dependent services will also
+be stopped. In Funtoo Linux, by default it is safe to stop or restart ``netif.eth0``
+or any other network interface. By default, network-dependent services will
+keep running.
+
+It is possible to modify this behavior in a very fine-grained way. Say that you
+need ``netif.eth0`` to be up so that ``netmount`` can mount an NFS filesystem.
+To do this, add the following line to ``/etc/conf.d/netmount``::
+
+        rc_need="netif.eth0"
+
+This will cause ``netmount`` to start ``netif.eth0`` prior to mounting the
+remote NFS filesystem, and will cause ``netmount`` to be stopped if
+``netif.eth0`` is stopped.  However, ``sshd``, which listens on all interfaces
+and does not require a particular network interface to be "up", will remain
+running even if ``netif.eth0`` is stopped.
+
+If you would want ``netif.eth0`` to start before ``netmount`` starts, but don't
+want the stopping or restarting of ``netif.eth0`` to cause ``netmount`` to
+stop or restart, then you would do this::
+
+        rc_use="netif.eth0"
+
+This may not be useful for ``netmount``, which typically needs to maintain
+persistent network connections, but may be useful for scripts that need to only
+perform a short burst of network activity, such as one-time NTP time synchronization,
+or if you would prefer a script like ``sshd`` to start after ``netif.eth0``
+without a restart of ``netif.eth0`` causing ``sshd`` to also restart. The
+``rc_after`` and ``rc_before`` settings can also be used for this purpose.
+
+
