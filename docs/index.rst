@@ -133,7 +133,8 @@ information when the ``netif.eth0`` is brought up. The OpenResolv framework
 will add entries to ``/etc/resolv.conf``, and will also handle removing these
 entries when the interface is brought down. This way, ``/etc/resolv.conf``
 should always contain current information and should not need to be manually
-edited by the system administrator.
+edited by the system administrator. ``dhcpcd`` will also use OpenResolv for
+updating system DNS information.
 
 Network-Dependent Services
 --------------------------
