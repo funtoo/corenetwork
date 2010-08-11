@@ -92,8 +92,8 @@ Here are the key components of the template-based network configuration system:
    interface, a bridge interface, a bond interface, etc.
 
 2) ``/etc/init.d/netif.tmpl`` -- This is the master init script for the
-    template-based network configuration system. New interfaces are added
-    to your system by creating **symbolic links** to this file in ``/etc/init.d``.
+   template-based network configuration system. New interfaces are added
+   to your system by creating **symbolic links** to this file in ``/etc/init.d``.
     
 So, if you wanted to use this system to configure ``eth0`` with a static
 IP address, you would create a ``netif.eth0`` symlink to ``netif.tmpl``
