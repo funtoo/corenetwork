@@ -240,6 +240,29 @@ networks.  After emerging, add to your default runlevel as follows::
 
         # rc-update add wpa_supplicant default
 
+802.11 Passphrases
+------------------
+
+The only remaining step is to use the ``wpa_passphrase`` utility to store
+hashed keys (passwords) that ``wpa_supplicant`` can use to connect to your
+favorite wireless networks. This is done as follows::
+
+        # wpa_passphrase jims-netgear >> /etc/wpa_supplicant/wpa_supplicant.conf
+        <enter your passphrase>
+
+Now, when ``wpa_supplicant`` encounters an SSID of ``jims-netgear``, it will use
+the password you entered to authenticate with this access point.
+
+At this point, ensure that ``dhcpcd`` has been enabled in your current runlevel
+and type ``rc`` to start everything up. ``wpa_supplicant`` should be able to
+automatically associate with SSIDs in its config file, at which point ``dhcpcd``
+will take over and acquire an IP address from a DHCP server. This should all
+happen seamlessly. Use the ``iwconfig`` command to see if you have successfully
+associated with an access point.
+
+Wireless Firmware
+-----------------
+
 Many wireless adapters will now have everything they need to work. However,
 if you have an Intel wireless adapter, then you may need to install the
 proper microcode for your device in addition to ensuring that the proper Intel
@@ -270,26 +293,6 @@ This error message generally means "I can't find this file
 *``iwlwifi-5000-1.ucode`` that I'm looking for in ``/lib/firmware``."* With the
 proper firmware in place, then the wireless driver will be happy and
 wpa-supplicant can then bring the wireless interface up.
-
-802.11 Passphrases
-------------------
-
-The only remaining step is to use the ``wpa_passphrase`` utility to store
-hashed keys (passwords) that ``wpa_supplicant`` can use to connect to your
-favorite wireless networks. This is done as follows::
-
-        # wpa_passphrase jims-netgear >> /etc/wpa_supplicant/wpa_supplicant.conf
-        <enter your passphrase>
-
-Now, when ``wpa_supplicant`` encounters an SSID of ``jims-netgear``, it will use
-the password you entered to authenticate with this access point.
-
-At this point, ensure that ``dhcpcd`` has been enabled in your current runlevel
-and type ``rc`` to start everything up. ``wpa_supplicant`` should be able to
-automatically associate with SSIDs in its config file, at which point ``dhcpcd``
-will take over and acquire an IP address from a DHCP server. This should all
-happen seamlessly. Use the ``iwconfig`` command to see if you have successfully
-associated with an access point.
 
 Other Network Configurations
 ============================
