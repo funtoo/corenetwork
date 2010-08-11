@@ -8,8 +8,10 @@ start() {
 	ebegin "$STARTD"
 	
 	# VLANS:
-	if [ -n "${trunk}" ]; then
-		ip link add dev ${interface} link ${trunk} type vlan id ${interface##*.} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
+	vlan="${interface##*.}"
+	if [ -n "$vlan" ]; then
+		trunk="${interface%.*}"
+		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
 
 	ip addr flush dev $interface
