@@ -5,7 +5,21 @@
 # TODO - generate cached templates for /etc/init.d/foo, use them for starting and stopping
 # rather than running "live" commands. This way "stop" will work correctly.
 
-INT=${RC_SVCNAME##*.}
+# I may want to change INT to have the format netif.eth0-<vlan,etc.> to
+# make the network info differentiated from the stacked runlevel name.
+# otherwise, /etc/conf.d might be odd and it will be confusing to differentiate
+# between the following:
+# 
+# netif.eth0.home (home runlevel)
+# netif.eth0.32 (VLAN 32 or runlevel 32?)
+# 
+# 
+# vs:
+# 
+# netif.eth0.home (home runlevel)
+# netif.eth0-32.home (vlan 32, home runlevel)
+
+INT=${RC_SVCNAME#netif.}
 interface=${interface:-$INT}
 
 [ "$interface" = "tmpl" ] && exit 0

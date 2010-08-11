@@ -125,6 +125,28 @@ set should specify the gateway's IP address. In addition, ``domain`` and
 ``nameservers`` (space-separated if more than one) can be used to specify DNS
 information for this interface.
 
+VLAN Configuration
+------------------
+
+.. Note: This functionality is currently in the process of being added and
+   it not functional yet. A more complete example (with trunk interface
+   example) is needed.
+
+More Complex Network Configuration
+----------------------------------
+
+If the standard templates don't work for your needs, simply create a new
+template -- I recommend starting from the ``interface`` template for most
+things::
+
+        # cd /etc/netif.d
+        # cp interface custom
+
+You can now call whatever commands you need to ``/etc/netif.d/custom``.
+The templates are fairly straightforward and utilize functions defined
+within ``/etc/netif.d/common.sh``.
+
+
 OpenResolv and resolv.conf
 --------------------------
 
