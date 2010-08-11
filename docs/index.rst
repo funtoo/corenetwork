@@ -189,6 +189,26 @@ like this::
         # rc-update add netif.eth0 static
         # rc-update add dhcpcd dynamic
 
+To switch to or between each runlevel, we would type::
+
+	# rc static
+
+Or::
+
+	# rc dynamic
+
+If we wanted to boot into ``dynamic`` by default, this could be
+done by editing ``/etc/inittab`` and modifying this line::
+
+	l3:3:wait:/sbin/rc default
+
+To read as follows::
+
+	l3:3:wait:/sbin/rc dynamic
+
+Alternate Configs
+-----------------
+
 If you need to run the same service with different configuration parameters
 depending upon runlevel, then you'll be happy to know that you can specify
 runlevel-specific conf.d files by appending a ``.runlevel`` suffix. In this
