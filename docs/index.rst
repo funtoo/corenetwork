@@ -21,23 +21,23 @@ Introduction
 .. _OpenRC: http://roy.marples.name/projects/openrc
 .. role:: change
 
-Funtoo Linux has its own core network configuration that differs somewhat from
+Funtoo Linux has its own core network configuration system that differs somewhat from
 upstream network configuration systems used in `Gentoo Linux`_ and `OpenRC`_.
 Despite this difference, Funtoo Linux remains compatible with upstream `Gentoo
 Linux`_ and `OpenRC`_. 
 
 In this document, I will explain the unique additions and changes to the Funtoo
-network configuration, why these changes were made, and how to use this system
-to configure your network.
+network configuration and show you how to use this system to configure your
+network.
 
 I'll also explain how to use ``dhcpcd 5.x`` for managing network interfaces on
-DHCP-based networks, and will also cover *Wi-Fi* (IEEE 802.11) configuration
-and the OpenResolv framework.
+DHCP-based networks, and will also cover OpenRC stacked runlevel configuration,
+*Wi-Fi* (IEEE 802.11) configuration, and the OpenResolv framework, which is
+enabled in Funtoo Linux by default.
 
-Funtoo network configuration is quite functional but is also something that I
-periodically improve and enhance as Funtoo Linux progresses in its development.
-
-.. Important:: There is no need to use netif.d templates. You can use simple scripts to set up network. See the examples in /usr/share/doc/funtoo-netscripts-\*/
+.. Note:: The Funtoo network configuration system is quite functional but is also something
+  that I periodically improve and enhance as Funtoo Linux progresses in its
+  development.
 
 A Gentle Introduction to Funtoo Network Configuration
 =====================================================

@@ -1,3 +1,4 @@
+.. Important:: There is no need to use netif.d templates. You can use simple scripts to set up network. See the examples in /usr/share/doc/funtoo-netscripts-\*/
 
 core-netif differences
 ======================
