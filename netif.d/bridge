@@ -1,37 +1,23 @@
-#!/sbin/runscript
+#!/bin/sh
 
 netif_depend() {
 	[ -n "$slaves" ] && need $slaves
 }
 
-start() {
+netif_pre_up() {
 	local slave
-	ebegin "$STARTD"
 	brctl addbr $interface
-	if [ -n "$slaves" ]
-	then
-		for slave in ${slaves//netif./}
-		do
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
 			brctl addif $interface ${slave}
 		done
 	fi	
 	brctl setfd $interface 0 
-	ip addr flush dev $interface
-	for ipnm in $ipaddr $ipaddrs
-	do
+	for ipnm in $ipaddr $ipaddrs; do
 		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
 	done
-	ip link set $interface up || die "Couldn't bring $interface up" 
-	[ -n "$mtu" ] && { ip link set dev $interface mtu $mtu || die "Couldn't set MTU on $interface to $mtu"; }
-	ezroute add; ezresolv add
-	eend 0 
 }
 
-stop() {
-	ebegin "$STOPD"
-	ezresolv del; ezroute del
-	ip link set $interface down
-	ip addr flush dev $interface
+netif_post_down() {
 	brctl delbr $interface
-	eend 0 
 }

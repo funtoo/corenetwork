@@ -94,11 +94,134 @@ depend() {
 	need root
 	# call netif_depend function... if it exists
 	declare -f netif_depend > /dev/null
+	[ -n "${trunk}" ] && need "netif.${trunk}"
 	[ $? -eq 0 ] && netif_depend
-
 }
 
-. /etc/netif.d/common.sh
+netif_pre_up() {
+}
+
+netif_post_up() {
+}
+
+netif_pre_down() {
+}
+
+netif_post_down() {
+}
+
+start() {
+	ebegin "$STARTD"
+	ip addr flush dev $interface
+	if [ -n "$trunk" ]; then
+		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
+	fi
+	netif_pre_up
+	ip link set $interface up
+	if [ -n "$mtu" ]
+	then
+		ip link set $interface mtu $mtu
+		if [ -n "$slaves" ]; then
+			for slave in ${slaves//netif./}; do
+				ip link set $slave mtu $mtu || eend $?
+			done
+		fi
+	fi
+	ezroute add; ezresolv add
+	netif_start
+	eend $?
+}
+
+stop() {
+	ebegin "$STOPD"
+	netif_pre_down
+	ezresolv del; ezroute del
+	ip link set $interface down
+	ip addr flush dev $interface
+	netif_post_down
+	# VLANS:
+	[ -n "${trunk}" ] && ip link delete ${interface}
+	eend 0
+}
+
+domain=${domain:-$DOM}
+if [ -n "$IP" ]
+then
+	ipaddr=$IP/$NM
+fi
+netmask=${netmask:-$NM}
+slaves=${slaves:-$SLAVES}
+mtu=${mtu:-$MTU}
+nameservers="${nameservers:-$NS1 $NS2}"
+gateway=${gateway:-$GW}
+
+start_pre() {
+	if [ -n "$ipaddr $ipaddrs" ]
+	then
+		for i in $ipaddr $ipaddrs
+		do
+			if [ "${i##*/}" = "$i" ]
+			then
+				echo
+				ewarn "You probably want to add a netmask to the ipaddr $i defined in $settings."
+				ewarn "Example: ipaddr=\"192.168.0.1/24\""
+				echo
+			fi
+		done
+	fi
+}
+
+ezdns() {
+	# This function generates a resolv.conf entry, which ezresolv() passes to resolvconf
+	[ -n "$domain" ] && echo "domain $domain"
+	for ns in $nameservers
+	do
+		echo "nameserver $ns"
+	done
+}
+
+ezresolv() {
+	# This function calls resolvconf (openresolv) with the correct resolv.conf passed as a here-file
+	if [ "$1" = "add" ]; then
+		[ -z "`ezdns`" ] && return
+		resolvconf -a $interface << EOF || die "Problem adding DNS info for $interface"
+`ezdns`
+EOF
+	else
+		resolvconf -d $interface
+	fi
+}
+
+ezroute() {
+	if [ "$gateway" = "default" ]
+	then
+		qipr $1 default dev $interface
+	elif [ -n "$gateway" ]
+	then
+		qipr $1 default via $gateway
+	fi
+}
+
+qipr() {
+	ip route $*
+	[ "$1" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $*"
+}
+
+
+if [ -z "$trunk" ]; then
+	# auto-detect trunk/vlan ID from interface name -
+	# interface "eth0.32" would have trunk of "eth0" and vlan of "32":
+	autovlan=1
+	vlan="${interface##*.}"
+	trunk="${interface%.*}"
+	# vlan and trunk will be "" for a regular interface (i.e. "eth0")
+else
+	# user has specified a trunk of something like "eth0" (maybe this
+	# interface is called "mgmt") .In this case, we expect vlan to be 
+	# defined in the config file too.
+	autovlan=0
+	require vlan
+fi
 
 . $src_template
 

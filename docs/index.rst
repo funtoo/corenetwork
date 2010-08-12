@@ -125,12 +125,76 @@ set should specify the gateway's IP address. In addition, ``domain`` and
 ``nameservers`` (space-separated if more than one) can be used to specify DNS
 information for this interface.
 
-VLAN Configuration
-------------------
+Basic VLAN Configuration
+------------------------
 
-.. Note: This functionality is currently in the process of being added and
-   it not functional yet. A more complete example (with trunk interface
-   example) is needed.
+The standard ``interface`` template supports typical VLAN configurations. To
+configure VLANs, first configure the trunk interface using the
+``interface-noip`` template. Assuming ``eth1`` is trunked, you would create the
+file ``/etc/conf.d/netif.eth1`` with the following contents::
+
+        template="interface-noip"
+
+Then, create a network interface symlink for the trunk and add it to your
+default runlevel::
+
+        # cd /etc/init.d
+        # ln -s netif.tmpl netif.eth1
+        # rc-update add netif.eth1 default
+
+Now, assuming you wanted to configure a VLAN of 32, you would create a config
+file named ``/etc/conf.d/netif.eth1.32`` that looks something like this::
+
+        template="interface"
+        ipaddr="1.2.3.4/24"
+        gateway="1.2.3.1"
+        # etc...
+
+Then, create a VLAN network interface symlink and add it to your default
+runlevel::
+
+        # cd /etc/init.d
+        # ln -s netif.tmpl netif.eth1.32
+        # rc-update add netif.eth1.32 default
+
+The Funtoo network configuration scripts will automatically recognize the
+filename ``netif.eth1.32`` as being VLAN 32 of trunk interface
+``netif.eth1``. 
+
+When the VLAN interface is brought up, it will be named ``eth1.32``.
+
+Custom VLAN Names
+-----------------
+
+However, sometimes you may want to turn off automatic file-based autodetection
+of VLAN name and give your VLAN interface a custom name, such as ``mgmt``. To
+do this, you would set up the trunk interface in the exact same way as described
+above.
+
+But instead of creating a ``netif.eth1.32`` interface, you would create a
+``netif.mgmt`` interface, and specify ``vlan`` and ``trunk`` in the
+``/etc/conf.d/netif.mgmt`` config file, as follows::
+
+        template="interface"
+        vlan="32"
+        trunk="eth1"
+        ipaddr="1.2.3.4/24"
+        gateway="1.2.3.1"
+        # etc...
+
+When you specify ``trunk`` and ``vlan`` in the interface config file,
+filename-based auto-detection of VLAN ID and trunk is disabled. 
+Both ``trunk`` and ``vlan`` must be specified -- you can't specify just
+one.
+
+Then you would simply create a VLAN network interface symlink for
+``netif.mgmt``::
+
+        # cd /etc/init.d
+        # ln -s netif.tmpl netif.mgmt
+        # rc-update add netif.mgmt default
+
+When the VLAN interface is brought up, it will be named ``mgmt``.
 
 More Complex Network Configuration
 ----------------------------------

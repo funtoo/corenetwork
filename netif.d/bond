@@ -1,28 +1,15 @@
+#!/bin/sh
 
 netif_depend() {
 	need $slaves
 }
 
-start() {
-	ebegin "$STARTD"
+netif_post_up() {
 	require slaves
-	ip link set $interface up
 	ip addr add 0.0.0.0 dev $interface
-	if [ -n "$mtu" ]
-	then
-		ip link set $interface mtu $mtu
-		for slave in ${slaves//netif./}
-		do
-			ip link set $slave mtu $mtu || eend $?
-		done
-	fi
 	ifenslave $interface ${slaves//netif./}
-	eend $?
 }
 
-stop() {
-	ebegin "$STOPD"
-	ifenslave -d $INT ${slaves//netif./}
-	ip link set $interface down || die "Couldn't bring $interface down"
-	eend $?
+netif_pre_down() {
+	ifenslave -d $interface ${slaves//netif./}
 }

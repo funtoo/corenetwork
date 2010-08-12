@@ -1,17 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
-start() {
-	ebegin "$STARTD"
-	ip addr flush dev $interface
+netif_pre_up() {
 	# needed? :
 	ip addr add 0.0.0.0 dev $interface
-	ip link set $interface up
-	eend $?
 }
 
-stop() {
-	ebegin "$STOPD"
-	ip link set $interface down
-	ip addr flush dev $interface
-	eend $?
-}

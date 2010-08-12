@@ -1,37 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
-netif_depend() {
-	[ -n "${trunk}" ] && need "netif.${trunk}"
-}
-
-start() {
-	ebegin "$STARTD"
-	
-	# VLANS:
-	vlan="${interface##*.}"
-	if [ -n "$vlan" ]; then
-		trunk="${interface%.*}"
-		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
-	fi
-
-	ip addr flush dev $interface
-	for ipnm in $ipaddr $ipaddrs
-	do
+netif_pre_up() {
+	for ipnm in $ipaddr $ipaddrs; do
 		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
 	done
-	ip link set $interface up || die "Couldn't bring $interface up"
-	ezroute add; ezresolv add
-	eend $?
-}
-
-stop() {
-	ebegin "$STOPD"
-	ezresolv del; ezroute del
-	ip link set $interface down 
-	ip addr flush dev $interface
-
-	# VLANS:
-	[ -n "${interface##*.}" ] && ip link delete ${interface}
-
-	eend 0
 }
