@@ -1,9 +1,5 @@
 #!/bin/sh
 
-netif_depend() {
-	[ -n "$slaves" ] && need $slaves
-}
-
 netif_pre_up() {
 	local slave
 	brctl addbr $interface

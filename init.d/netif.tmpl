@@ -95,6 +95,7 @@ depend() {
 	# call netif_depend function... if it exists
 	declare -f netif_depend > /dev/null
 	[ -n "${trunk}" ] && need "netif.${trunk}"
+	[ -n "$slaves" ] && need $slaves
 	[ $? -eq 0 ] && netif_depend
 }
 
