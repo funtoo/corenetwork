@@ -129,14 +129,17 @@ Interface Variables
 The following variables are supported by the ``interface`` and ``bridge``
 templates:
 
-- ``ipaddr`` or ``ipaddrs`` - specify IPv4 or IPv6 address(es) for the interface.
-   IP addresses should be specified in "IP/netmask" format, such as "10.0.0.1/24".
-   Multiple IP addresses can be specified like this::
+- ``ipaddr`` or ``ipaddrs``: specify IPv4 or IPv6 address(es) for the interface.
+  IP addresses should be specified in "IP/netmask" format, such as "10.0.0.1/24".
+  Multiple IP addresses can be specified like this::
 
         ipaddrs="10.0.0.1/24 10.0.0.2/24"
 
-Note that in some cases, you should not specify an ``ipaddr`` or ``ipaddrs`` for
-a ``bridge`` template.
+Note that in some cases, you may choose to **not** specify ``ipaddr`` or
+``ipaddrs`` for a ``bridge`` template. That is allowed. If you don't want to
+specify an IP address for a regular interface, you can choose to use the 
+``interface`` template without an IP address or use the ``interface-noip``
+template instead, for the sake of clarity.
 
 General Variables
 ~~~~~~~~~~~~~~~~~
