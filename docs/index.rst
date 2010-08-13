@@ -218,10 +218,11 @@ things::
         # cp interface custom
 
 You can now call whatever commands you need to ``/etc/netif.d/custom``.
-The following functions can be defined in a network script::
+The following functions can be defined in a network script:
 
 - ``netif_depend``: define dependencies for the script.
 - ``netif_up_pre``: define actions to take prior to bringing the interface up.
+    You can also ensure certain variables are specified by calling ``require var1 [var2...]`` here.
 - ``netif_up_post``: define actions to take after bringing the interface up.
 - ``netif_down_pre``: define actions to take prior to bringing the interface down.
 - ``netif_up_post``: define actions to take after bringing the interface down.
