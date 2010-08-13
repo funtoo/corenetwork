@@ -125,6 +125,17 @@ set should specify the gateway's IP address. In addition, ``domain`` and
 ``nameservers`` (space-separated if more than one) can be used to specify DNS
 information for this interface.
 
+OpenResolv and resolv.conf
+--------------------------
+
+For the network configuration above, OpenResolv will be used to set DNS
+information when the ``netif.eth0`` is brought up. The OpenResolv framework
+will add entries to ``/etc/resolv.conf``, and will also handle removing these
+entries when the interface is brought down. This way, ``/etc/resolv.conf``
+should always contain current information and should not need to be manually
+edited by the system administrator. ``dhcpcd`` will also use OpenResolv for
+updating system DNS information.
+
 Basic VLAN Configuration
 ------------------------
 
@@ -207,27 +218,52 @@ things::
         # cp interface custom
 
 You can now call whatever commands you need to ``/etc/netif.d/custom``.
-The templates are fairly straightforward and utilize functions defined
-within ``/etc/netif.d/common.sh``.
+The following functions can be defined in a network script::
 
+- ``netif_depend``: define dependencies for the script.
+- ``netif_up_pre``: define actions to take prior to bringing the interface up.
+- ``netif_up_post``: define actions to take after bringing the interface up.
+- ``netif_down_pre``: define actions to take prior to bringing the interface down.
+- ``netif_up_post``: define actions to take after bringing the interface down.
 
-OpenResolv and resolv.conf
---------------------------
+.. Note:: You do not specify a function for actually bringing up the interface,
+   because the template-based system does this for you. It also performs other
+   actions for you automatically, which are detailed below.
 
-For the network configuration above, OpenResolv will be used to set DNS
-information when the ``netif.eth0`` is brought up. The OpenResolv framework
-will add entries to ``/etc/resolv.conf``, and will also handle removing these
-entries when the interface is brought down. This way, ``/etc/resolv.conf``
-should always contain current information and should not need to be manually
-edited by the system administrator. ``dhcpcd`` will also use OpenResolv for
-updating system DNS information.
+The following variables are enabled by default for all network scripts, and if
+specified will trigger a corresponding configuration action.
+
+General Variables
+~~~~~~~~~~~~~~~~~
+
+- **nameservers**: Set DNS nameservers using OpenResolv.
+- **domain**: Set DNS domain using OpenResolv.
+- **gateway**: Define a default gateway.
+- **mtu**: Set Maximum Transmit Unit for the interface
+- **slaves**: Set slave interfaces of this interface (for bridges, etc.)
+  All slaves will automatically be depended upon, and will also automatically
+  have their ``mtu`` set to that of the parent, if an ``mtu`` is specified.
+  This setting is typically used with bridge and bond interfaces.
+
+VLAN Variables
+~~~~~~~~~~~~~~
+
+VLAN support is enabled by default for all network configuration scripts. If
+a network script has a name in the format ``netif.ethX.Y``, then it is assumed
+to be a VLAN interface referencing trunk ``ethX`` and VLAN ID ``Y``. If you
+desire a custom name for your VLAN interface, you can name your interface 
+whatever you'd like and specify the following variables in your interface
+config file:
+
+- **trunk**: VLAN trunk interface, e.g. "eth0"
+- **vlan**: VLAN id, e.g. "32"
 
 Network-Dependent Services
 --------------------------
 
-One important difference between Gentoo Linux and Funtoo Linux is that, by
-default, network-dependent services only strictly depend on ``netif.lo``.  This
-means that if a network service requires an interface to be up, such as
+One important difference between Gentoo Linux and Funtoo Linux is that, in Funtoo
+Linux, network-dependent services only strictly depend on ``netif.lo``. This
+means that if another network service requires an interface to be up, such as
 ``samba`` requiring ``eth0``, then the system administrator must specify this
 relationship by adding the following line to ``/etc/conf.d/samba``::
 
