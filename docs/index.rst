@@ -106,11 +106,6 @@ Then, you would create an ``/etc/conf.d/netif.eth0`` configuration file
 that would specify which template to use from the ``/etc/netif.d``
 directory::
 
-Then, you would define required and optional variables for the particular
-template you are using. Here is a description of all currently-available
-network templates. In our particular case, the ``/etc/conf.d/netif.eth0``
-file may contain something like this::
-
         template="interface"
         ipaddr="10.0.1.200/24"
         gateway="10.0.1.1"
