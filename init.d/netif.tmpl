@@ -115,6 +115,7 @@ start() {
 	ebegin "$STARTD"
 	ip addr flush dev $interface
 	if [ -n "$trunk" ]; then
+		require vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
 	netif_pre_up
