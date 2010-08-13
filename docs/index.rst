@@ -207,58 +207,6 @@ Then you would simply create a VLAN network interface symlink for
 
 When the VLAN interface is brought up, it will be named ``mgmt``.
 
-More Complex Network Configuration
-----------------------------------
-
-If the standard templates don't work for your needs, simply create a new
-template -- I recommend starting from the ``interface`` template for most
-things::
-
-        # cd /etc/netif.d
-        # cp interface custom
-
-You can now call whatever commands you need to ``/etc/netif.d/custom``.
-The following functions can be defined in a network script:
-
-- ``netif_depend``: define dependencies for the script.
-- ``netif_up_pre``: define actions to take prior to bringing the interface up.
-    You can also ensure certain variables are specified by calling ``require var1 [var2...]`` here.
-- ``netif_up_post``: define actions to take after bringing the interface up.
-- ``netif_down_pre``: define actions to take prior to bringing the interface down.
-- ``netif_up_post``: define actions to take after bringing the interface down.
-
-.. Note:: You do not specify a function for actually bringing up the interface,
-   because the template-based system does this for you. It also performs other
-   actions for you automatically, which are detailed below.
-
-The following variables are enabled by default for all network scripts, and if
-specified will trigger a corresponding configuration action.
-
-General Variables
-~~~~~~~~~~~~~~~~~
-
-- **nameservers**: Set DNS nameservers using OpenResolv.
-- **domain**: Set DNS domain using OpenResolv.
-- **gateway**: Define a default gateway.
-- **mtu**: Set Maximum Transmit Unit for the interface
-- **slaves**: Set slave interfaces of this interface (for bridges, etc.)
-  All slaves will automatically be depended upon, and will also automatically
-  have their ``mtu`` set to that of the parent, if an ``mtu`` is specified.
-  This setting is typically used with bridge and bond interfaces.
-
-VLAN Variables
-~~~~~~~~~~~~~~
-
-VLAN support is enabled by default for all network configuration scripts. If
-a network script has a name in the format ``netif.ethX.Y``, then it is assumed
-to be a VLAN interface referencing trunk ``ethX`` and VLAN ID ``Y``. If you
-desire a custom name for your VLAN interface, you can name your interface 
-whatever you'd like and specify the following variables in your interface
-config file:
-
-- **trunk**: VLAN trunk interface, e.g. "eth0"
-- **vlan**: VLAN id, e.g. "32"
-
 Network-Dependent Services
 --------------------------
 
@@ -344,6 +292,88 @@ runlevels named ``home`` and ``work``::
 
 Note that this feature works for all init scripts, not just network
 configuration scripts. 
+
+
+More Complex Network Configuration
+----------------------------------
+
+If the standard templates don't work for your needs, simply create a new
+template -- I recommend starting from the ``interface`` template for most
+things::
+
+        # cd /etc/netif.d
+        # cp interface custom
+
+You can now call whatever commands you need to ``/etc/netif.d/custom``.
+The following shell functions can be defined in a network script:
+
+netif_depend
+~~~~~~~~~~~~
+
+In ``netif_depend``, you can define dependencies, using the functions
+``need`` and ``use``.
+
+netif_up_pre
+~~~~~~~~~~~~
+
+In ``netif_up_pre``, you can define network configuration actions to perform prior to bringing the interface up.
+You can also ensure certain variables are specified by calling ``require var1 [var2...]`` here.
+
+netif_up_post
+~~~~~~~~~~~~~
+
+In ``netif_up_post``, you can define network configuration actions to perform after bringing the interface up.
+
+netif_down_pre
+~~~~~~~~~~~~~~
+
+In ``netif_down_pre``, you can define network configuration actions to perform prior to bringing the interface down.
+
+netif_down_post
+~~~~~~~~~~~~~~~
+
+In ``netif_down_post``, you can define network configuration actions to perform after bringing the interface down.
+
+.. Note:: You do not specify a function for actually bringing up the interface,
+   because the template-based system does this for you. The template-based
+   system also performs all normal actions for required for bringing an
+   interface down, so only need to specify atypical actions that must be
+   performed (such as removing child interfaces or destroying a bridge using
+   ``brctl``.) The system also performs other actions for you automatically,
+   which are detailed below.
+
+The following variables are enabled by default for all network scripts, and if
+specified will trigger a corresponding configuration action.
+
+General Variables
+~~~~~~~~~~~~~~~~~
+
+- ``nameservers``: Set DNS nameservers using OpenResolv.
+
+- ``domain``: Set DNS domain using OpenResolv.
+
+- ``gateway``: Define a default gateway.
+
+- ``mtu``: Set Maximum Transmit Unit for the interface
+
+- **slaves**: Set slave interfaces of this interface (for bridges, etc.)
+  All slaves will automatically be depended upon, and will also automatically
+  have their ``mtu`` set to that of the current interface, if an ``mtu`` is specified
+  for the current interface.  This setting is typically used for bridge and bond interfaces.
+
+VLAN Variables
+~~~~~~~~~~~~~~
+
+VLAN support is enabled by default for all network configuration scripts. If
+a network script has a name in the format ``netif.ethX.Y``, then it is assumed
+to be a VLAN interface referencing trunk ``ethX`` and VLAN ID ``Y``. If you
+desire a custom name for your VLAN interface, you can name your interface 
+whatever you'd like and specify the following variables in your interface
+config file:
+
+- ``trunk``: VLAN trunk interface, e.g. "eth0"
+
+- ``vlan``: VLAN id, e.g. "32"
 
 Wireless Configuration
 ======================
