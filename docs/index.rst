@@ -120,6 +120,63 @@ set should specify the gateway's IP address. In addition, ``domain`` and
 ``nameservers`` (space-separated if more than one) can be used to specify DNS
 information for this interface.
 
+Configuration Variables
+-----------------------
+
+Interface Variables
+~~~~~~~~~~~~~~~~~~~
+
+The following variables are supported by the ``interface`` and ``bridge``
+templates::
+
+- ``ipaddr`` or ``ipaddrs`` - specify IPv4 or IPv6 address(es) for the interface.
+   IP addresses should be specified in "IP/netmask" format, such as "10.0.0.1/24".
+   Multiple IP addresses can be specified like this::
+
+        ipaddrs="10.0.0.1/24 10.0.0.2/24"
+
+Note that in some cases, you will not want to specify ``ipaddr`` or ``ipaddrs`` for
+a ``bridge`` template.
+
+General Variables
+~~~~~~~~~~~~~~~~~
+
+The following variables are enabled by default for all network scripts, and if
+specified will trigger a corresponding configuration action:
+
+
+- ``nameservers``: Set DNS nameservers using OpenResolv. Specify multiple nameservers
+  like this: "1.2.3.4 1.2.3.5 1.2.3.6"
+
+- ``domain``: Set DNS domain using OpenResolv.
+
+- ``gateway``: Define a default gateway.
+
+- ``mtu``: Set Maximum Transmit Unit for the interface
+
+- ``slaves``: Set slave interfaces of this interface (for bridges, etc.)
+  All slaves will automatically be depended upon, and will also automatically
+  have their ``mtu`` set to that of the current interface, if an ``mtu`` is specified
+  for the current interface.  This setting is required for the ``bond`` template
+  and optional for the ``bridge`` template.
+
+VLAN Variables
+~~~~~~~~~~~~~~
+
+VLAN support is enabled by default for all network configuration scripts. If
+a network script has a name in the format ``netif.ethX.Y``, then it is assumed
+to be a VLAN interface referencing trunk ``ethX`` and VLAN ID ``Y``. If you
+desire a custom name for your VLAN interface, you can name your interface 
+whatever you'd like and specify the following variables in your interface
+config file:
+
+- ``trunk``: VLAN trunk interface, e.g. "eth0"
+
+- ``vlan``: VLAN id, e.g. "32"
+
+.. Note:: More detailed information on VLAN configuration can be found below -
+   See **Basic VLAN Configuration** and **Custom VLAN Names**.
+
 OpenResolv and resolv.conf
 --------------------------
 
@@ -329,46 +386,28 @@ netif_down_post
 
 In ``netif_down_post``, you can define network configuration actions to perform after bringing the interface down.
 
-.. Note:: You do not specify a function for actually bringing up the interface,
-   because the template-based system does this for you. The template-based
-   system also performs all normal actions for required for bringing an
-   interface down, so only need to specify atypical actions that must be
-   performed (such as removing child interfaces or destroying a bridge using
-   ``brctl``.) The system also performs other actions for you automatically,
-   which are detailed below.
+How It Works
+~~~~~~~~~~~~
 
-The following variables are enabled by default for all network scripts, and if
-specified will trigger a corresponding configuration action.
+You do not specify a function for actually bringing up the interface,
+because the template-based system does this for you. The template-based
+system also performs all normal actions for required for bringing an
+interface down, so only need to specify atypical actions that must be
+performed - such as removing child interfaces or destroying a bridge using
+``brctl``. 
 
-General Variables
-~~~~~~~~~~~~~~~~~
+When you create your own network configuration template, the following
+capabilities are enabled automatically, without requiring any steps on
+your part:
 
-- ``nameservers``: Set DNS nameservers using OpenResolv.
+- DNS configuration using ``domain`` and ``nameservers`` config settings. OpenResolv is used automatically.
+- VLAN configuration using auto-naming (``netif.ethX.Y``) or via custom naming with ``trunk`` and ``vlan`` config settings.
+- Default gateway configuration using the ``gateway`` setting.
+- MTU configuration using the ``mtu`` setting.
+- Auto-depend (and auto-MTU configuration) of slave interfaces specified using ``slaves`` setting. 
 
-- ``domain``: Set DNS domain using OpenResolv.
-
-- ``gateway``: Define a default gateway.
-
-- ``mtu``: Set Maximum Transmit Unit for the interface
-
-- **slaves**: Set slave interfaces of this interface (for bridges, etc.)
-  All slaves will automatically be depended upon, and will also automatically
-  have their ``mtu`` set to that of the current interface, if an ``mtu`` is specified
-  for the current interface.  This setting is typically used for bridge and bond interfaces.
-
-VLAN Variables
-~~~~~~~~~~~~~~
-
-VLAN support is enabled by default for all network configuration scripts. If
-a network script has a name in the format ``netif.ethX.Y``, then it is assumed
-to be a VLAN interface referencing trunk ``ethX`` and VLAN ID ``Y``. If you
-desire a custom name for your VLAN interface, you can name your interface 
-whatever you'd like and specify the following variables in your interface
-config file:
-
-- ``trunk``: VLAN trunk interface, e.g. "eth0"
-
-- ``vlan``: VLAN id, e.g. "32"
+All other necessary network configuration and dependency behavior should be
+defined using the ``netif_``-prefix functions described above.
 
 Wireless Configuration
 ======================
