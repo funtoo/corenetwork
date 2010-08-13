@@ -138,8 +138,8 @@ templates:
 Note that in some cases, you may choose to **not** specify ``ipaddr`` or
 ``ipaddrs`` for a ``bridge`` template. That is allowed. If you don't want to
 specify an IP address for a regular interface, you can choose to use the 
-``interface`` template without an IP address or use the ``interface-noip``
-template instead, for the sake of clarity.
+``interface`` template without an IP address specified in the config, 
+or use the ``interface-noip`` template instead, for the sake of clarity.
 
 General Variables
 ~~~~~~~~~~~~~~~~~

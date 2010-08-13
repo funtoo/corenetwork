@@ -91,7 +91,7 @@ die() {
 
 depend() {
 	config "$settings"
-	need root
+	need localmount
 	# call netif_depend function... if it exists
 	declare -f netif_depend > /dev/null
 	[ -n "${trunk}" ] && need "netif.${trunk}"
