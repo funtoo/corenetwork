@@ -25,14 +25,10 @@ if [ -z "$template" ]; then
 	exit 1
 fi
 
-BLUE="[34;01m"
 CYAN="[36;01m"
 CYANN="[36m"
 GREEN="[32;01m"
 RED="[31;01m"
-PURP="[35;01m"
-YEL="[33;01m"
-BOLD="[01m"
 OFF="[0m"
 
 if [ -n "$description" ]
@@ -43,6 +39,7 @@ else
 	DESC1="$interface${OFF}"
 	DESC2="${CYANN}${template}${OFF}"
 fi
+
 STARTD="Interface $DESC1 ${GREEN}up${OFF} - $DESC2"
 STOPD="Interface $DESC1 ${RED}down${OFF} - $DESC2"
 
