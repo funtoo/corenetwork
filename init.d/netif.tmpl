@@ -31,8 +31,7 @@ GREEN="[32;01m"
 RED="[31;01m"
 OFF="[0m"
 
-if [ -n "$description" ]
-then
+if [ -n "$description" ]; then
 	DESC1="$interface${OFF}"
 	DESC2="${CYAN}${description}${OFF}"
 else
