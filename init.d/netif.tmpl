@@ -1,24 +1,11 @@
 #!/sbin/runscript
-# Copyright (c) 2007-2009 Funtoo Technologies
+# Copyright (c) 2007-2010 Funtoo Technologies
 # All rights reserved. Released under the 2-clause BSD license.
 
-# TODO - generate cached templates for /etc/init.d/foo, use them for starting and stopping
-# rather than running "live" commands. This way "stop" will work correctly.
+# TODO - generate cached config for /etc/init.d/foo, use them for starting and stopping
+# rather than running "live" commands. This way "stop" will work correctly at all times.
 
-# I may want to change INT to have the format netif.eth0-<vlan,etc.> to
-# make the network info differentiated from the stacked runlevel name.
-# otherwise, /etc/conf.d might be odd and it will be confusing to differentiate
-# between the following:
-# 
-# netif.eth0.home (home runlevel)
-# netif.eth0.32 (VLAN 32 or runlevel 32?)
-# 
-# 
-# vs:
-# 
-# netif.eth0.home (home runlevel)
-# netif.eth0-32.home (vlan 32, home runlevel)
-
+# next line: INT = deprecated, support it for backwards compat:
 INT=${RC_SVCNAME#netif.}
 interface=${interface:-$INT}
 
@@ -26,16 +13,14 @@ interface=${interface:-$INT}
 
 settings="/etc/conf.d/netif.${interface}"
 
-if [ ! -e "$settings" ]
-then
+if [ ! -e "$settings" ]; then
 	error "Settings $settings not found."
 	exit 1
 fi
 
 . $settings
 
-if [ -z "$template" ]
-then
+if [ -z "$template" ]; then
 	eerror "Please specify a template (template=) for $RC_SVCNAME in $settings"
 	exit 1
 fi
@@ -65,17 +50,14 @@ src_template="/etc/netif.d/$template"
 
 require() {
 	local missing=""
-	for envname in $*
-	do
+	for envname in $*; do 
 		[ -z "${!envname}" ] && missing="$missing $envname"
 	done
-	if [ -n "$missing" ]
-	then
+	if [ -n "$missing" ]; then
 		echo
 		eerror "ERROR: Required variable(s) are missing from ${CYAN}$settings${OFF}:"
 		eerror ""
-		for miss in $missing
-		do
+		for miss in $missing; do
 			eerror "    ${CYAN}$miss${OFF}"
 		done
 		eerror ""
@@ -85,9 +67,7 @@ require() {
 	fi
 }
 
-die() {
-	eend 1 "$*"; exit 1
-}
+die() { eend 1 "$*"; exit 1 }
 
 depend() {
 	config "$settings"
@@ -99,17 +79,10 @@ depend() {
 	[ $? -eq 0 ] && netif_depend
 }
 
-netif_pre_up() {
-}
-
-netif_post_up() {
-}
-
-netif_pre_down() {
-}
-
-netif_post_down() {
-}
+netif_pre_up() { }
+netif_post_up() { }
+netif_pre_down() { }
+netif_post_down() { }
 
 start() {
 	ebegin "$STARTD"
@@ -120,8 +93,7 @@ start() {
 	fi
 	netif_pre_up
 	ip link set $interface up
-	if [ -n "$mtu" ]
-	then
+	if [ -n "$mtu" ]; then
 		ip link set $interface mtu $mtu
 		if [ -n "$slaves" ]; then
 			for slave in ${slaves//netif./}; do
@@ -146,9 +118,9 @@ stop() {
 	eend 0
 }
 
+# DOM, IP, NM, SLAVES, MTU, NS1, NS2, GW are deprecated - this is backwards compat. code:
 domain=${domain:-$DOM}
-if [ -n "$IP" ]
-then
+if [ -n "$IP" ]; then
 	ipaddr=$IP/$NM
 fi
 netmask=${netmask:-$NM}
@@ -156,14 +128,12 @@ slaves=${slaves:-$SLAVES}
 mtu=${mtu:-$MTU}
 nameservers="${nameservers:-$NS1 $NS2}"
 gateway=${gateway:-$GW}
+# COMPAT END
 
 start_pre() {
-	if [ -n "$ipaddr $ipaddrs" ]
-	then
-		for i in $ipaddr $ipaddrs
-		do
-			if [ "${i##*/}" = "$i" ]
-			then
+	if [ -n "$ipaddr $ipaddrs" ]; then
+		for i in $ipaddr $ipaddrs; do
+			if [ "${i##*/}" = "$i" ]; then
 				echo
 				ewarn "You probably want to add a netmask to the ipaddr $i defined in $settings."
 				ewarn "Example: ipaddr=\"192.168.0.1/24\""
@@ -174,10 +144,9 @@ start_pre() {
 }
 
 ezdns() {
-	# This function generates a resolv.conf entry, which ezresolv() passes to resolvconf
+	# This function generates a resolv.conf file, which ezresolv() passes to resolvconf
 	[ -n "$domain" ] && echo "domain $domain"
-	for ns in $nameservers
-	do
+	for ns in $nameservers; do
 		echo "nameserver $ns"
 	done
 }
@@ -195,35 +164,21 @@ EOF
 }
 
 ezroute() {
-	if [ "$gateway" = "default" ]
-	then
-		qipr $1 default dev $interface
-	elif [ -n "$gateway" ]
-	then
-		qipr $1 default via $gateway
+	if [ -n "$gateway" ]; then
+		ip route $1 default via $gateway
+		[ "$1" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $*"
 	fi
 }
 
-qipr() {
-	ip route $*
-	[ "$1" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $*"
-}
-
-
 if [ -z "$trunk" ]; then
 	# auto-detect trunk/vlan ID from interface name -
-	# interface "eth0.32" would have trunk of "eth0" and vlan of "32":
 	autovlan=1
 	vlan="${interface##*.}"
 	trunk="${interface%.*}"
-	# vlan and trunk will be "" for a regular interface (i.e. "eth0")
 else
-	# user has specified a trunk of something like "eth0" (maybe this
-	# interface is called "mgmt") .In this case, we expect vlan to be 
-	# defined in the config file too.
+	# trunk/vlan ID specified by user in config - 
 	autovlan=0
 	require vlan
 fi
 
 . $src_template
-
