@@ -42,8 +42,6 @@ fi
 STARTD="Interface $DESC1 ${GREEN}up${OFF} - $DESC2"
 STOPD="Interface $DESC1 ${RED}down${OFF} - $DESC2"
 
-src_template="/etc/netif.d/$template"
-
 require() {
 	local missing=""
 	for envname in $*; do 
@@ -63,28 +61,26 @@ require() {
 	fi
 }
 
-die() { eend 1 "$*"; exit 1 }
+die() { eend 1 "$*"; exit 1; }
+netif_depend() { return; }
+netif_pre_up() { return; }
+netif_post_up() { return; }
+netif_pre_down() { return; }
+netif_post_down() { return; }
 
 depend() {
 	config "$settings"
 	need localmount
-	# call netif_depend function... if it exists
-	declare -f netif_depend > /dev/null
-	[ -n "${trunk}" ] && need "netif.${trunk}"
+	[ "$vlanmode" != "off" ] && need "netif.${trunk}"
 	[ -n "$slaves" ] && need $slaves
-	[ $? -eq 0 ] && netif_depend
+	netif_depend
 }
-
-netif_pre_up() { }
-netif_post_up() { }
-netif_pre_down() { }
-netif_post_down() { }
 
 start() {
 	ebegin "$STARTD"
 	ip addr flush dev $interface
-	if [ -n "$trunk" ]; then
-		require vlan
+	if [ "$vlanmode" != "off" ]; then
+		require trunk vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
 	netif_pre_up
@@ -98,7 +94,6 @@ start() {
 		fi
 	fi
 	ezroute add; ezresolv add
-	netif_start
 	eend $?
 }
 
@@ -110,7 +105,7 @@ stop() {
 	ip addr flush dev $interface
 	netif_post_down
 	# VLANS:
-	[ -n "${trunk}" ] && ip link delete ${interface}
+	[ "${vlanmode}" != "off" ] && ip link delete ${interface}
 	eend 0
 }
 
@@ -167,14 +162,15 @@ ezroute() {
 }
 
 if [ -z "$trunk" ]; then
-	# auto-detect trunk/vlan ID from interface name -
-	autovlan=1
+	# auto-detect trunk/vlan ID from interface name
+	vlanmode="auto"
 	vlan="${interface##*.}"
 	trunk="${interface%.*}"
+	[ "$vlan" = "$interface" ] && vlanmode="off"
 else
-	# trunk/vlan ID specified by user in config - 
-	autovlan=0
+	# trunk/vlan ID specified by user in config
+	vlanmode="custom"
 	require vlan
 fi
 
-. $src_template
+. /etc/netif.d/$template
