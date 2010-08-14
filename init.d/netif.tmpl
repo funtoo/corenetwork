@@ -11,36 +11,19 @@ interface=${interface:-$INT}
 
 [ "$interface" = "tmpl" ] && exit 0
 
-settings="/etc/conf.d/netif.${interface}"
-
-if [ ! -e "$settings" ]; then
-	error "Settings $settings not found."
-	exit 1
-fi
-
-. $settings
-
 if [ -z "$template" ]; then
-	eerror "Please specify a template (template=) for $RC_SVCNAME in $settings"
+	eerror "Please specify a template (template=) for $RC_SVCNAME"
 	exit 1
 fi
 
 CYAN="[36;01m"
-CYANN="[36m"
-GREEN="[32;01m"
-RED="[31;01m"
 OFF="[0m"
+	
+DESC2="${template}"
+[ -n "$description" ] && DESC2="${description}"
 
-if [ -n "$description" ]; then
-	DESC1="$interface${OFF}"
-	DESC2="${CYAN}${description}${OFF}"
-else
-	DESC1="$interface${OFF}"
-	DESC2="${CYANN}${template}${OFF}"
-fi
-
-STARTD="Interface $DESC1 ${GREEN}up${OFF} - $DESC2"
-STOPD="Interface $DESC1 ${RED}down${OFF} - $DESC2"
+STARTD="Network $DESC2 $CYAN$interface$OFF up"
+STOPD="Network $DESC2 $CYAN$interface$OFF down"
 
 require() {
 	local missing=""
@@ -49,13 +32,13 @@ require() {
 	done
 	if [ -n "$missing" ]; then
 		echo
-		eerror "ERROR: Required variable(s) are missing from ${CYAN}$settings${OFF}:"
+		eerror "ERROR: Required configuration variable(s) are missing:"
 		eerror ""
 		for miss in $missing; do
 			eerror "    ${CYAN}$miss${OFF}"
 		done
 		eerror ""
-		eerror "Please correct ${CYAN}$settings${OFF} to address this issue."
+		eerror "Please correct your configuration to address this issue."
 		echo
 		exit 1
 	fi
@@ -69,7 +52,6 @@ netif_pre_down() { return; }
 netif_post_down() { return; }
 
 depend() {
-	config "$settings"
 	need localmount
 	[ "$vlanmode" != "off" ] && need "netif.${trunk}"
 	[ -n "$slaves" ] && need $slaves
@@ -126,7 +108,7 @@ start_pre() {
 		for i in $ipaddr $ipaddrs; do
 			if [ "${i##*/}" = "$i" ]; then
 				echo
-				ewarn "You probably want to add a netmask to the ipaddr $i defined in $settings."
+				ewarn "You probably want to add a netmask to the ipaddr $i defined in your configuration."
 				ewarn "Example: ipaddr=\"192.168.0.1/24\""
 				echo
 			fi
