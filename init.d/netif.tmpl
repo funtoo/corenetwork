@@ -60,11 +60,11 @@ depend() {
 
 start() {
 	ebegin "$STARTD"
-	ip addr flush dev $interface
 	if [ "$vlanmode" != "off" ]; then
 		require trunk vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
+	ip addr flush dev $interface
 	netif_pre_up
 	ip link set $interface up
 	if [ -n "$mtu" ]; then
