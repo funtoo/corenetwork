@@ -188,8 +188,8 @@ information when the ``netif.eth0`` is brought up. The OpenResolv framework
 will add entries to ``/etc/resolv.conf``, and will also handle removing these
 entries when the interface is brought down. This way, ``/etc/resolv.conf``
 should always contain current information and should not need to be manually
-edited by the system administrator. ``dhcpcd`` will also use OpenResolv for
-updating system DNS information.
+edited by the system administrator. ``dhcpcd`` will use OpenResolv for
+updating system DNS information as well.
 
 Network-Dependent Services
 --------------------------
@@ -214,12 +214,10 @@ and down by the system administrator.
 Multiple Network Configurations
 -------------------------------
 
-It is common for laptop users to use DHCP most of the time, but
-occasionally connect to network where a static network configuration
-is required. This is a situation where one Funtoo Linux machine will
-require **multiple** network configurations, and a mechanism will be
-required to allow the user to switch between both configurations as
-needed.
+It is common for a laptop user to use DHCP most of the time; however, they
+may also need to periodially connect to network where a static network configuration
+is required. This is a situation where a Funtoo Linux machine will
+require **multiple** network configurations. Funtoo Linux supports this.
 
 The recommended approach for doing this is to use multiple, stacked runlevels.
 To do this, you will need to create two new runlevels which are children
@@ -267,7 +265,7 @@ Alternate Configs
 
 If you need to run the same service with different configuration parameters
 depending upon runlevel, then you'll be happy to know that you can specify
-runlevel-specific conf.d files by appending a ``.runlevel`` suffix. In this
+runlevel-specific conf.d files by appending a ``.<runlevel>`` suffix. In this
 particular example, we could imagine a situation where we had two child
 runlevels named ``home`` and ``work``::
 
@@ -280,10 +278,10 @@ configuration scripts.
 Basic VLAN Configuration
 ------------------------
 
-The standard ``interface`` template supports typical VLAN configurations. To
-configure VLANs, first configure the trunk interface using the
-``interface-noip`` template. Assuming ``eth1`` is trunked, you would create the
-file ``/etc/conf.d/netif.eth1`` with the following contents::
+The standard ``interface`` template supports VLANs. To use VLAN support, first
+configure the trunk interface using the ``interface-noip`` template. Assuming
+``eth1`` is trunked, you would create the file ``/etc/conf.d/netif.eth1`` with
+the following contents::
 
         template="interface-noip"
 
@@ -318,12 +316,10 @@ When the VLAN interface is brought up, it will be named ``eth1.32``.
 Custom VLAN Names
 -----------------
 
-However, sometimes you may want to turn off automatic file-based autodetection
-of VLAN name and give your VLAN interface a custom name, such as ``mgmt``. To
-do this, you would set up the trunk interface in the exact same way as described
-above.
-
-But instead of creating a ``netif.eth1.32`` interface, you would create a
+However, sometimes you may want to turn off automatic file-based VLAN naming
+and give your VLAN interface a custom name, such as ``mgmt``. To do this, you
+would set up the trunk interface in the exact same way as described above,
+but instead of creating a ``netif.eth1.32`` interface, you would create a
 ``netif.mgmt`` interface, and specify ``vlan`` and ``trunk`` in the
 ``/etc/conf.d/netif.mgmt`` config file, as follows::
 
@@ -335,7 +331,7 @@ But instead of creating a ``netif.eth1.32`` interface, you would create a
         # etc...
 
 When you specify ``trunk`` and ``vlan`` in the interface config file,
-filename-based auto-detection of VLAN ID and trunk is disabled. 
+filename-based auto-detecting of VLAN ID and trunk is disabled. 
 Both ``trunk`` and ``vlan`` must be specified -- you can't specify just
 one.
 
@@ -399,14 +395,17 @@ performed - such as removing child interfaces or destroying a bridge using
 ``brctl``. 
 
 When you create your own network configuration template, the following
-capabilities are enabled automatically, without requiring any steps on
-your part:
+capabilities are available for use automatically, as long as the appropriate
+variables are set in the ``/etc/conf.d/netif.<ifname>`` file,, without
+requiring any explicit steps on your part:
 
 - DNS configuration using ``domain`` and ``nameservers`` config settings. OpenResolv is used automatically.
 - VLAN configuration using auto-naming (``netif.ethX.Y``) or via custom naming with ``trunk`` and ``vlan`` config settings.
 - Default gateway configuration using the ``gateway`` setting.
 - MTU configuration using the ``mtu`` setting.
 - Auto-depend (and auto-MTU configuration) of slave interfaces specified using ``slaves`` setting. 
+
+To take advantage of this functionality, simply enable the appropriate variables.
 
 All other necessary network configuration and dependency behavior should be
 defined using the ``netif_``-prefix functions described above.
@@ -422,11 +421,10 @@ your kernel, the appropriate wireless modules, and emerge ``wireless-tools``::
 
         # emerge wireless-tools
 
-I also recommend you ``emerge wpa_supplicant`` 0.6.9 or later, which includes
-an OpenRC-compatible initscript that is compatible with Funtoo as well.
-``wpa_supplicant`` implements modern WPA/WPA2 wireless link-layer encryption,
-which is necessary for connecting to most modern password-protected wireless
-networks.  After emerging, add to your default runlevel as follows::
+I also recommend you ``emerge wpa_supplicant``.  ``wpa_supplicant`` implements
+modern WPA/WPA2 wireless link-layer encryption, which is necessary for
+connecting to most modern password-protected wireless networks.  After
+emerging, add to your default runlevel as follows::
 
         # rc-update add wpa_supplicant default
 
