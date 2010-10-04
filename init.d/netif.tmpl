@@ -60,6 +60,9 @@ depend() {
 
 start() {
 	ebegin "$STARTD"
+	if [ "$macaddr" != "" ]; then
+		/sbin/nameif ${interface} ${macaddr}
+	fi
 	if [ "$vlanmode" != "off" ]; then
 		require trunk vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
