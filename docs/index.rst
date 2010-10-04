@@ -275,6 +275,22 @@ runlevels named ``home`` and ``work``::
 Note that this feature works for all init scripts, not just network
 configuration scripts. 
 
+Interface Renaming
+------------------
+
+The git version of corentwork now supports interface renaming, so you can
+create an interface called ``lan`` if you would like. To so this, simply
+specify the MAC address of the interface you would like to rename using
+the ``macaddr`` variable::
+
+        macaddr="00:15:17:19:b6:a3"
+
+If this MAC address is part of the ``netif.lan`` configuration file, then when
+this interface starts, whatever interface currently has the MAC address of
+00:15:17:19:b6:a3 (i.e. ``eth5``) will be renamed to ``lan`` prior to the
+interface being brought up, and will show up in ``ifconfig`` and ``ip``
+commands as being an interface named ``lan``.
+
 Basic VLAN Configuration
 ------------------------
 
@@ -404,6 +420,7 @@ requiring any explicit steps on your part:
 - Default gateway configuration using the ``gateway`` setting.
 - MTU configuration using the ``mtu`` setting.
 - Auto-depend (and auto-MTU configuration) of slave interfaces specified using ``slaves`` setting. 
+- Renaming of existing network interface (specify MAC address using ``macaddr`` setting).
 
 To take advantage of this functionality, simply enable the appropriate variables.
 
