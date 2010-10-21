@@ -64,6 +64,13 @@ start() {
 		/sbin/nameif ${interface} ${macaddr}
 	fi
 	if [ "$vlanmode" != "off" ]; then
+	       	if [ ! -d /proc/net/vlan ]; then
+		       	modprobe 8021q
+			if [ ! -d /proc/net/vlan ]; then
+				eerror "VLAN for interface $interface could not be configured:"
+				die " \n802.1q support is not present in this kernel."
+			fi
+		fi
 		require trunk vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
