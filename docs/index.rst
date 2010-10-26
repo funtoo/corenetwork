@@ -278,10 +278,10 @@ configuration scripts.
 Interface Renaming
 ------------------
 
-The git version of corenetwork now supports interface renaming, so you can
-create an interface called ``lan`` if you would like. To so this, simply
-specify the MAC address of the interface you would like to rename using
-the ``macaddr`` variable::
+Funtoo network scripts now support interface renaming, so you can create an
+interface called ``lan`` if you would like. To so this, simply specify the MAC
+address of the interface you would like to rename using the ``macaddr``
+variable::
 
         macaddr="00:15:17:19:b6:a3"
 
