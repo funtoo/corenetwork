@@ -1,8 +1,15 @@
 #!/bin/sh
 
+netif_create() {
+	brctl addbr $interface
+}
+
+netif_destroy() {
+	brctl delbr $interface
+}
+
 netif_pre_up() {
 	local slave
-	brctl addbr $interface
 	if [ -n "$slaves" ]; then
 		for slave in ${slaves//netif./}; do
 			brctl addif $interface ${slave}
@@ -12,8 +19,4 @@ netif_pre_up() {
 	for ipnm in $ipaddr $ipaddrs; do
 		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
 	done
-}
-
-netif_post_down() {
-	brctl delbr $interface
 }

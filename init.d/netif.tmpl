@@ -46,10 +46,12 @@ require() {
 
 die() { eend 1 "$*"; exit 1; }
 netif_depend() { return; }
+netif_create() { return; }
 netif_pre_up() { return; }
 netif_post_up() { return; }
 netif_pre_down() { return; }
 netif_post_down() { return; }
+netif_destroy() { return; }
 
 depend() {
 	need localmount
@@ -60,6 +62,7 @@ depend() {
 
 start() {
 	ebegin "$STARTD"
+	netif_create
 	if [ "$macaddr" != "" ]; then
 		/sbin/nameif ${interface} ${macaddr}
 	fi
@@ -98,6 +101,7 @@ stop() {
 	netif_post_down
 	# VLANS:
 	[ "${vlanmode}" != "off" ] && ip link delete ${interface}
+	netif_destroy
 	eend 0
 }
 
