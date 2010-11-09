@@ -89,6 +89,13 @@ start() {
 		fi
 	fi
 	ezroute add; ezresolv add
+	if [ "$multicast" = "yes" ]
+	then
+		ebegin "Adding multicast route for $interface"	
+		route add -net 224.0.0.0 netmask 240.0.0.0 dev $interface
+		eend $?
+	fi
+	netif_post_up
 	eend $?
 }
 
