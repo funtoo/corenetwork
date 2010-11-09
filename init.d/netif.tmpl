@@ -140,6 +140,7 @@ start_pre() {
 ezdns() {
 	# This function generates a resolv.conf file, which ezresolv() passes to resolvconf
 	[ -n "$domain" ] && echo "domain $domain"
+	[ -n "$search" ] && echo "search $search"
 	for ns in $nameservers; do
 		echo "nameserver $ns"
 	done
