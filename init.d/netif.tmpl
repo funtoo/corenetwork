@@ -154,7 +154,7 @@ ezresolv() {
 `ezdns`
 EOF
 	else
-		resolvconf -d $interface
+		resolvconf -d $interface > /dev/null 2>&1
 	fi
 }
 
