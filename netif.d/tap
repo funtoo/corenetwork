@@ -1,0 +1,20 @@
+#!/bin/sh
+
+netif_create() {
+	tunctl -b -t $interface
+	if [ -n "$user" ]; then
+		tunctl -u $user -t $interface
+	fi
+	if [ -n "$group" ]; then
+		tunctl -g $group -t $interface
+	fi
+}
+
+netif_destroy() {
+	tunctl -d interface
+}
+
+netif_pre_up() {
+	ip link set $interface promisc on
+	
+}
