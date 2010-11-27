@@ -164,6 +164,8 @@ ezroute() {
 	local rest="$route"
 	[ -n "$gateway" ] && rest="$rest; default via $gateway"
 	if [ -n "$rest" ]; then
+		# must end in a semi-colon before we start processing:
+		rest="$rest;"
 		while [ "$rest" != "" ]
 		do
 			# first = current route command; rest = remainder
