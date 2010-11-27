@@ -159,9 +159,21 @@ EOF
 }
 
 ezroute() {
-	if [ -n "$gateway" ]; then
-		ip route $1 default via $gateway
-		[ "$1" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $*"
+	# This function processes a semi-colon delimited list of routes set in $route, and also
+	# supports the $gateway variable for setting a default IP route. 
+	local rest="$route"
+	[ -n "$gateway" ] && rest="$rest; default via $gateway"
+	if [ -n "$rest" ]; then
+		while [ "$rest" != "" ]
+		do
+			# first = current route command; rest = remainder
+			first="${rest%%;*}"
+			rest="${rest#*;}"
+			# trim any trailing or leading spaces:
+			first=${first%% }; first=${first## }
+			[ "$first" != "" ] && ip route $1 $first
+			[ "$1" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
+		done
 	fi
 }
 
