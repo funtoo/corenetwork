@@ -1,7 +1,19 @@
 #!/bin/sh
 
 netif_pre_up() {
+	local count=-1
+	local label=""
 	for ipnm in $ipaddr $ipaddrs; do
-		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+		if [ $count -ge 0 ]
+		then
+			label=$interface:$count
+		fi
+		if [ -z "$label" ]
+		then
+			ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+		else
+			ip addr add $ipnm label $label dev $interface || die "Couldn't add $ipnm to $interface"
+		fi
+		count=$(( $count + 1 ))	
 	done
 }
