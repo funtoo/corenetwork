@@ -64,7 +64,7 @@ start() {
 	ebegin "$STARTD"
 	netif_create
 	if [ "$macaddr" != "" ]; then
-		/sbin/nameif ${interface} ${macaddr}
+		/sbin/nameif ${interface} ${macaddr} || die "Couldn't rename interface"
 	fi
 	if [ "$vlanmode" != "off" ]; then
 	       	if [ ! -d /proc/net/vlan ]; then
