@@ -11,7 +11,7 @@ netif_create() {
 }
 
 netif_destroy() {
-	tunctl -d interface
+	tunctl -d $interface
 }
 
 netif_pre_up() {
