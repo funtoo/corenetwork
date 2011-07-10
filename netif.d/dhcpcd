@@ -1,0 +1,34 @@
+#!/bin/sh
+
+netif_pre_up() {
+	local dhcpcd="/sbin/dhcpcd"
+	local pidfile="/var/run/dhcpcd-${interface}.pid"
+
+	if [ ! -f "${dhcpcd}" ]; then
+		echo "dhcpcd binary not found. Did you emerge net-misc/dhcpcd?"
+		exit 1
+	fi
+}
+
+netif_post_up() {
+	local pidfile="/var/run/dhcpcd-${interface}.pid"
+
+	if [ -f "${pidfile}" ]; then
+		echo "There's a PID file for interface $interface. Aborting."
+		exit 2
+	fi
+
+	$dhcpcd $interface
+}
+
+netif_pre_down() {
+	local pidfile="/var/run/dhcpcd-${interface}.pid"
+
+	if [ ! -f "${pidfile}" ]; then
+		echo "There's no PID file for interface ${interface}. Aborting."
+		exit 3
+	fi
+
+	start-stop-daemon --stop --quiet --signal SIGHUP --pidfile "${pidfile}"
+}
+
