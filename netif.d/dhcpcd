@@ -11,6 +11,7 @@ netif_pre_up() {
 }
 
 netif_post_up() {
+	local dhcpcd="/sbin/dhcpcd"
 	local pidfile="/var/run/dhcpcd-${interface}.pid"
 
 	if [ -f "${pidfile}" ]; then
