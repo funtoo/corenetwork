@@ -53,6 +53,21 @@ netif_pre_down() { return; }
 netif_post_down() { return; }
 netif_destroy() { return; }
 
+try() {
+	$* 
+	if [ $? -ne 0 ]; then
+		echo "Command failure: $*"
+		exit 1
+	fi
+}
+
+debug() {
+	$* 
+	if [ $? -ne 0 ]; then
+		echo "Command failure: $*"
+	fi
+}
+
 depend() {
 	need localmount
 	[ "$vlanmode" != "off" ] && need "netif.${trunk}"
@@ -77,9 +92,9 @@ start() {
 		require trunk vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
-	ip addr flush dev $interface
+	ip addr flush dev $interface > /dev/null 2>&1
 	netif_pre_up
-	ip link set $interface up
+	debug ip link set $interface up
 	if [ -n "$mtu" ]; then
 		ip link set $interface mtu $mtu
 		if [ -n "$slaves" ]; then
@@ -162,7 +177,7 @@ ezroute() {
 	# This function processes a semi-colon delimited list of routes set in $route, and also
 	# supports the $gateway variable for setting a default IP route. 
 	local rest="$route"
-	[ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
+	[ -n "$gateway" ] && rest="$rest; default via $gateway"
 	if [ -n "$rest" ]; then
 		# must end in a semi-colon before we start processing:
 		rest="$rest;"
