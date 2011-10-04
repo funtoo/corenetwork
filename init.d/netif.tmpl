@@ -178,7 +178,7 @@ ezroute() {
 	# supports the $gateway variable for setting a default IP route. 
 	local rest
 	if [ "$1" = "4" ]; then
-		rest=$route"
+		rest="$route"
 		[ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
 	elif [ "$1" = "6" ]; then
 		rest="$route6"
