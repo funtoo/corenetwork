@@ -182,7 +182,7 @@ ezroute() {
 		[ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
 	elif [ "$1" = "6" ]; then
 		rest = "$route6"
-		[ -n "$gateway6" ] && rest="$rest; default via $gateway dev $interface"
+		[ -n "$gateway6" ] && rest="$rest; default via $gateway6 dev $interface"
 	fi
 	if [ -n "$rest" ]; then
 		# must end in a semi-colon before we start processing:
