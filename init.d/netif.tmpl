@@ -103,7 +103,7 @@ start() {
 			done
 		fi
 	fi
-	ezroute add; ezresolv add
+	ezroute add 4; ezroute add 6; ezresolv add
 	if [ "$multicast" = "yes" ]
 	then
 		ebegin "Adding multicast route for $interface"	
@@ -117,7 +117,7 @@ start() {
 stop() {
 	ebegin "$STOPD"
 	netif_pre_down
-	ezresolv del; ezroute del
+	ezresolv del; ezroute del 6; ezroute del 4
 	ip link set $interface down
 	ip addr flush dev $interface
 	netif_post_down
@@ -176,8 +176,14 @@ EOF
 ezroute() {
 	# This function processes a semi-colon delimited list of routes set in $route, and also
 	# supports the $gateway variable for setting a default IP route. 
-	local rest="$route"
-	[ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
+	local rest
+	if [ "$1" = "4" ]; then
+		rest ="$route"
+		[ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
+	elif [ "$1" = "6" ]; then
+		rest = "$route6"
+		[ -n "$gateway6" ] && rest="$rest; default via $gateway dev $interface"
+	fi
 	if [ -n "$rest" ]; then
 		# must end in a semi-colon before we start processing:
 		rest="$rest;"
@@ -188,8 +194,8 @@ ezroute() {
 			rest="${rest#*;}"
 			# trim any trailing or leading spaces:
 			first=${first%% }; first=${first## }
-			[ "$first" != "" ] && ip route $1 $first
-			[ "$1" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
+			[ "$first" != "" ] && ip route -$1 $2 $first
+			[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
 		done
 	fi
 }
