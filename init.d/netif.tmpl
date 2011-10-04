@@ -103,7 +103,7 @@ start() {
 			done
 		fi
 	fi
-	ezroute add 4; ezroute add 6; ezresolv add
+	ezroute 4 add; ezroute 6 add; ezresolv add
 	if [ "$multicast" = "yes" ]
 	then
 		ebegin "Adding multicast route for $interface"	
@@ -117,7 +117,7 @@ start() {
 stop() {
 	ebegin "$STOPD"
 	netif_pre_down
-	ezresolv del; ezroute del 6; ezroute del 4
+	ezresolv del; ezroute 6 del; ezroute 4 del
 	ip link set $interface down
 	ip addr flush dev $interface
 	netif_post_down
