@@ -194,7 +194,7 @@ ezroute() {
 			rest="${rest#*;}"
 			# trim any trailing or leading spaces:
 			first=${first%% }; first=${first## }
-			[ "$first" != "" ] && ip route -$1 $2 $first
+			[ "$first" != "" ] && ip -$1 route $2 $first
 			[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
 		done
 	fi
