@@ -10,9 +10,13 @@ netif_pre_up() {
 		fi
 		if [ -z "$label" ]
 		then
-			ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+			ip addr add $(get_ipnm_part "$ipnm") \
+				broadcast $(get_option "$ipnm" broadcast +)  \
+				dev $interface || die "Couldn't add $ipnm to $interface"
 		else
-			ip addr add $ipnm label $label dev $interface || die "Couldn't add $ipnm to $interface"
+			ip addr add $(get_ipnm_part "$ipnm") \
+				broadcast $(get_option "$ipnm" broadcast +) \
+				label $label dev $interface || die "Couldn't add $ipnm to $interface"
 		fi
 		count=$(( $count + 1 ))	
 	done

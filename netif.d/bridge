@@ -17,6 +17,8 @@ netif_pre_up() {
 	fi	
 	brctl setfd $interface 0 
 	for ipnm in $ipaddr $ipaddrs; do
-		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+		ip addr add $(get_ipnm_part "$ipnm") \
+		broadcast $(get_option "$ipnm" broadcast +) \
+		dev $interface || die "Couldn't add $ipnm to $interface"
 	done
 }

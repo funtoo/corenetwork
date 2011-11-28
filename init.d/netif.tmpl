@@ -139,6 +139,44 @@ nameservers="${nameservers:-$NS1 $NS2}"
 gateway=${gateway:-$GW}
 # COMPAT END
 
+get_ipnm_part() {
+	echo "${1%%;*}"
+}
+
+# we encode the broadcast like this: 1.2.3.4/24;broadcast=1.2.3.255;foo=bar;x;y;z
+# we call the following function like this:
+# 'get_option "$ipnm" broadcast +'
+# it will return "1.2.3.255" if defined, and a '+' if not defined.
+# 'get_option "1.2.3.4;a;b;c" a false' will return 'true' if "a" is defined as a keyword, and "false" (default value)
+# otherwise.
+
+get_option() {
+	local full="$1"
+	local ipnm="$(get_ipnm_part $full)"
+	local oldparts="${full:${#ipnm}}"
+	local trim
+	while true; do
+		[ "${oldparts:$((${#oldparts}-1))}" = ";" ] && oldparts="${oldparts:0:$((${#oldparts}-1))}" && continue
+		count=$(($count + 1))
+		thispart="${oldparts##*;}"
+		varname="${thispart%%=*}"
+		if [ "$varname" = "$thispart" ] && [ "$thispart" = "$2" ]; then
+			echo "true"
+			return
+		fi
+		if [ "$varname" != "$thispart" ] && [ "$varname" = "$2" ]; then
+			echo "${thispart#*=}"
+			return
+		fi
+		[ -z "$thispart" ] && break
+		trim=$(( ${#oldparts} - ${#thispart} ))
+		oldparts="${oldparts:0:${trim}}"
+		[ -z "${oldparts}" ] && break
+	done
+	# return default (if any)
+	echo "$3"
+}
+
 start_pre() {
 	if [ -n "$ipaddr $ipaddrs" ]; then
 		for i in $ipaddr $ipaddrs; do
