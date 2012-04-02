@@ -10,15 +10,19 @@ netif_destroy() {
 
 netif_pre_up() {
 	local slave
+	local bcast
 	if [ -n "$slaves" ]; then
 		for slave in ${slaves//netif./}; do
 			brctl addif $interface ${slave}
 		done
 	fi	
+	if [ -n "$(if_ipv4 $ipnm)" ] 
+	then
+		bcast="broadcast $(get_option "$ipnm" broadcast +)"
+	fi
 	brctl setfd $interface 0 
 	for ipnm in $ipaddr $ipaddrs; do
-		ip addr add $(get_ipnm_part "$ipnm") \
-		broadcast $(get_option "$ipnm" broadcast +) \
+		ip addr add $(get_ipnm_part "$ipnm") $bcast \
 		dev $interface || die "Couldn't add $ipnm to $interface"
 	done
 }

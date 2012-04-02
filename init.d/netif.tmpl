@@ -150,6 +150,10 @@ get_ipnm_part() {
 # 'get_option "1.2.3.4;a;b;c" a false' will return 'true' if "a" is defined as a keyword, and "false" (default value)
 # otherwise.
 
+if_ipv4() {
+	echo "${1%%/*}" | awk '/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/ {print $1}'
+}
+
 get_option() {
 	local full="$1"
 	local ipnm="$(get_ipnm_part $full)"

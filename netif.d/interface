@@ -3,19 +3,22 @@
 netif_pre_up() {
 	local count=-1
 	local label=""
+	local bcast=""
 	for ipnm in $ipaddr $ipaddrs; do
 		if [ $count -ge 0 ]
 		then
 			label=$interface:$count
 		fi
+		if [ -n "$(if_ipv4 $ipnm)" ]
+		then
+			bcast="broadcast $(get_option "$ipnm" broadcast +)"
+		fi
 		if [ -z "$label" ]
 		then
-			ip addr add $(get_ipnm_part "$ipnm") \
-				broadcast $(get_option "$ipnm" broadcast +)  \
+			ip addr add $(get_ipnm_part "$ipnm") $bcast \
 				dev $interface || die "Couldn't add $ipnm to $interface"
 		else
-			ip addr add $(get_ipnm_part "$ipnm") \
-				broadcast $(get_option "$ipnm" broadcast +) \
+			ip addr add $(get_ipnm_part "$ipnm") $bcast \
 				label $label dev $interface || die "Couldn't add $ipnm to $interface"
 		fi
 		count=$(( $count + 1 ))	
