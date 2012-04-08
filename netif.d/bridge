@@ -19,6 +19,8 @@ netif_pre_up() {
 	if [ -n "$(if_ipv4 $ipnm)" ] 
 	then
 		bcast="broadcast $(get_option "$ipnm" broadcast +)"
+	else
+		bcast=""
 	fi
 	brctl setfd $interface 0 
 	for ipnm in $ipaddr $ipaddrs; do
