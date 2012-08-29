@@ -15,6 +15,6 @@ netif_destroy() {
 }
 
 netif_pre_up() {
+	ip link set dev $interface address $mac_addr
 	ip link set $interface promisc on
-	
 }
