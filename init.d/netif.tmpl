@@ -81,9 +81,13 @@ start() {
 	if [ "$macaddr" != "" ]; then
 		/sbin/nameif ${interface} ${macaddr} || die "Couldn't rename interface"
 	fi
+	if [ ! -d /proc/sys/net/ipv6 ]; then
+		# attempt to silently load ipv6 module
+		modprobe -q ipv6
+	fi
 	if [ "$vlanmode" != "off" ]; then
 	       	if [ ! -d /proc/net/vlan ]; then
-		       	modprobe 8021q
+		       	modprobe -q 8021q
 			if [ ! -d /proc/net/vlan ]; then
 				eerror "VLAN for interface $interface could not be configured:"
 				die " \n802.1q support is not present in this kernel."
