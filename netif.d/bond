@@ -1,11 +1,16 @@
 #!/bin/sh
 
+netif_pre_up() {
+        require slaves
+        for ipnm in $ipaddr $ipaddrs; do
+                ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+        done
+}
+
 netif_post_up() {
-	require slaves
-	ip addr add 0.0.0.0 dev $interface
-	ifenslave $interface ${slaves//netif./}
+        ifenslave $interface ${slaves//netif./}
 }
 
 netif_pre_down() {
-	ifenslave -d $interface ${slaves//netif./}
+        ifenslave -d $interface ${slaves//netif./}
 }
