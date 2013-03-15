@@ -27,4 +27,15 @@ netif_pre_up() {
 		ip addr add $(get_ipnm_part "$ipnm") $bcast \
 		dev $interface || die "Couldn't add $ipnm to $interface"
 	done
+        if [ -n "$stp" ]; then
+	        brctl stp $interface $stp 
+	fi 
+	
+		if [ -n "$forwarding" ]; then
+		        /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+		fi 
+
+
 }
+
+
