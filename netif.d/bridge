@@ -16,24 +16,22 @@ netif_pre_up() {
 			brctl addif $interface ${slave}
 		done
 	fi	
-	if [ -n "$(if_ipv4 $ipnm)" ] 
-	then
-		bcast="broadcast $(get_option "$ipnm" broadcast +)"
-	else
-		bcast=""
-	fi
 	brctl setfd $interface 0 
 	for ipnm in $ipaddr $ipaddrs; do
-		ip addr add $(get_ipnm_part "$ipnm") $bcast \
-		dev $interface || die "Couldn't add $ipnm to $interface"
+	    if [ -n "$(if_ipv4 $ipnm)" ]; then
+		bcast="broadcast $(get_option "$ipnm" broadcast +)"
+	    else
+		bcast=""
+	    fi
+	    ip addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
 	done
         if [ -n "$stp" ]; then
-	        brctl stp $interface $stp 
+	    brctl stp $interface $stp 
 	fi 
 	
-		if [ -n "$forwarding" ]; then
-		        /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
-		fi 
+	if [ -n "$forwarding" ]; then
+	    /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+	fi 
 
 
 }
