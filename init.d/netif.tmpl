@@ -96,7 +96,7 @@ start() {
 		require trunk vlan
 		ip link add dev ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
-	ip addr flush dev $interface > /dev/null 2>&1
+	ip addr flush dev $interface scope global > /dev/null 2>&1
 	netif_pre_up
 	debug ip link set $interface up
 	if [ -n "$mtu" ]; then
@@ -123,7 +123,7 @@ stop() {
 	netif_pre_down
 	ezresolv del; ezroute 6 del; ezroute 4 del
 	ip link set $interface down
-	ip addr flush dev $interface
+	ip addr flush dev $interface scope global
 	netif_post_down
 	# VLANS:
 	[ "${vlanmode}" != "off" ] && ip link delete ${interface}
