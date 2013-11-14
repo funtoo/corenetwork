@@ -108,6 +108,7 @@ start() {
 		fi
 	fi
 	ezroute 4 add; ezroute 6 add; ezresolv add
+	ezrule 4 add; ezrule 6 add
 	if [ "$multicast" = "yes" ]
 	then
 		ebegin "Adding multicast route for $interface"	
@@ -121,6 +122,7 @@ start() {
 stop() {
 	ebegin "$STOPD"
 	netif_pre_down
+	ezrule 6 del; ezrule 4 del
 	ezresolv del; ezroute 6 del; ezroute 4 del
 	ip link set $interface down
 	ip addr flush dev $interface scope global
@@ -245,6 +247,27 @@ ezroute() {
 			first=${first%% }; first=${first## }
 			[ "$first" != "" ] && ip -$1 route $2 $first
 			[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
+		done
+	fi
+}
+
+ezrule() {
+	# This function processes a semi-colon delimited list of rules set in $rule
+	local rest
+	if [ "$1" = "4" ]; then
+		rest="$rule"
+	elif [ "$1" = "6" ]; then
+		rest="$rule6"
+	fi
+	if [ -n "$rest" ]; then
+		# ensure a terminating semi-colon
+		rest="$rest;"
+		while [ "$rest" != "" ]; do
+			first="${rest%%;*}"
+			rest="${rest#*;}"
+			first=${first%% }; first=${first## }
+			[ "$first" != "" ] && ip -$1 rule $2 $first
+			[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set rule: $first"
 		done
 	fi
 }
