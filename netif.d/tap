@@ -2,16 +2,16 @@
 
 netif_create() {
 	if [ -n "$user" ]; then
-		tunctl -u $user -t $interface
+		ip tuntap add dev $interface mode tap user $user
 	elif [ -n "$group" ]; then
-		tunctl -g $group -t $interface
+		ip tuntap add dev $interface mode tap group $group
 	else
-		tunctl -t $interface
+		ip tuntap add dev $interface mode tap
 	fi
 }
 
 netif_destroy() {
-	tunctl -d $interface
+	ip tuntap del dev $interface mode tap
 }
 
 netif_pre_up() {
