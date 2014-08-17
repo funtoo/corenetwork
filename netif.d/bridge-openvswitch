@@ -8,6 +8,15 @@ netif_depend() {
 
 netif_create() {
         ovs-vsctl --may-exist  add-br $interface
+        if [ -n "$mac_addr" ]; then
+             echo 'mac_addr is depricated and will be removed. Please use "macaddr"'
+        if [ -n "$macaddr" ]; then
+        echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
+        else
+            macaddr=$mac_addr
+        fi
+    fi
+	:
 }
 
 netif_destroy() {
@@ -32,6 +41,7 @@ netif_pre_up() {
         local bcast
         if [ -n "$slaves" ]; then
                 for slave in ${slaves//netif./}; do
+			ip addr flush dev ${slave}
                         ovs-vsctl --may-exist add-port $interface ${slave}
                         ovs-ofctl mod-port $interface ${slave} up
                 done
@@ -47,12 +57,18 @@ netif_pre_up() {
             ip addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
         done
 
+        for ipnm in $ipaddr $ipaddrs; do
+            ip -6 addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
+	done
+
+
         if [ -n "$stp" ]; then
             ovs-vsctl --if-exists set bridge $interface stp_enable=true
         fi
 
         if [ -n "$forwarding" ]; then
             /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+            /sbin/sysctl net.ipv6.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
         fi
 
 }

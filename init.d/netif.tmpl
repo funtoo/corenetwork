@@ -79,7 +79,7 @@ start() {
 	ebegin "$STARTD"
 	netif_create
 	if [ "$macaddr" != "" ]; then
-		/sbin/nameif ${interface} ${macaddr} || die "Couldn't rename interface"
+		ip link set ${interface} address ${macaddr} || die "Couldn't rename interface"
 	fi
 	if [ ! -d /proc/sys/net/ipv6 ]; then
 		# attempt to silently load ipv6 module

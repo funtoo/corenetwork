@@ -1,0 +1,18 @@
+template="bridge"
+ipaddr="192.168.1.10/24"
+gateway="192.168.1.254"
+slaves="netif.eth0 netif.tap0 "
+
+### Enable STP on the bridge(Function as a "real" switch) ###
+### Set Forwarding Delay to 0 ###
+stp="1"
+fd='0'
+### Enable Forwarding on the bridge interface ###
+### We do this here becaise this if doesn't exist ###
+### When Sysctl is first called ###
+### 1 = enabled, 0 = disabled ###
+forwarding="1"
+
+### Mac Address override ###
+### Defaults to address of last slave ###
+macaddr="DE:AD:BE:EF:34:23"

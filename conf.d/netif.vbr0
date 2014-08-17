@@ -1,0 +1,5 @@
+template="bridge-vde"
+br_interface="vbr0"
+ipaddr="192.168.1.10/24"
+gateway="192.168.1.254"
+slaves="netif.eth1 "

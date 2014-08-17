@@ -2,6 +2,6 @@
 
 netif_pre_up() {
 	# needed? :
-	ip addr add 0.0.0.0 dev $interface
+	ip addr flush dev $interface
 }
 

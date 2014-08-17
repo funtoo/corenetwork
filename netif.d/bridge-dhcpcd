@@ -3,12 +3,47 @@
 DHCPCD="/sbin/dhcpcd"
 PIDFILE="/var/run/dhcpcd-${interface}.pid"
 
+netif_depend() {
+	need dhcpd
+}
+
 netif_create() {
-	brctl addbr $interface
+	ip link add name $interface type bridge
+        if [ -n "$fd" ]; then
+           echo $fd > /sys/devices/virtual/net/${interface}/bridge/forward_delay
+        else
+           echo  0 > /sys/devices/virtual/net/${interface}/bridge/forward_delay
+        fi
+        for f in /proc/sys/net/bridge/bridge-nf-*; do echo 0 > $f; done
+	if [ -n "$mac_addr" ]; then
+	     echo 'mac_addr is depricated and will be removed. Please use "macaddr"'
+	if [ -n "$macaddr" ]; then
+        echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
+        else
+	    macaddr=$mac_addr
+        fi 
+    fi 
+        if [ -n "$stp" ]; then
+           echo "$stp" > /sys/devices/virtual/net/${interface}/bridge/stp_state         
+        else
+           echo "0" > /sys/devices/virtual/net/${interface}/bridge/stp_state
+        fi 
+	if [ -n "$forwarding" ]; then
+                /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+                /sbin/sysctl net.ipv6.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+        fi
 }
 
 netif_destroy() {
-	brctl delbr $interface
+    local slave
+    local bcast
+    if [ -n "$slaves" ]; then
+        for slave in ${slaves//netif./}; do 
+            ip link set dev ${slave} no master
+        done
+    fi  
+
+	ip link delete dev  $interface
 }
 
 netif_post_up() {
@@ -30,30 +65,30 @@ netif_pre_up() {
 	local bcast
 	if [ -n "$slaves" ]; then
 		for slave in ${slaves//netif./}; do
-			ifconfig ${slave} 0.0.0.0
-			brctl addif $interface ${slave}
+			ip addr flush dev ${slave}
+			ip link set dev ${slave} master ${interface}
 		done
 	fi
+
 	if [ -n "$(if_ipv4 $ipnm)" ]
 	then
 		bcast="broadcast $(get_option "$ipnm" broadcast +)"
 	else
 		bcast=""
 	fi
-	brctl setfd $interface 0
 	for ipnm in $ipaddr $ipaddrs; do
 		ip addr add $(get_ipnm_part "$ipnm") $bcast \
 		dev $interface || die "Couldn't add $ipnm to $interface"
 	done
 
-	if [ -n "$stp" ]; then
-                brctl stp $interface $stp
-        fi
+	for ipnm6 in $ipaddr6 $ipaddrs6; do
+	    ip -6 addr add $(get_ipnm_part "$ipnm6") $bcast dev $interface || die "Couldn't add $ipnm6 to $interface"
+	done
 
-	if [ -n "$forwarding" ]; then
-                /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
-        fi
+
+
 }
+
 
 
 netif_pre_down() {

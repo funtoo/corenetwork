@@ -1,0 +1,269 @@
+#!/bin/sh
+
+if [ -z "$debug" ]; then
+	debug=0
+fi
+
+netif_create() {
+
+	# Check to see if interface is already in use
+	if [ -z "${br_interace}" ]; then
+		iface_test="$(ip link | grep ${interface} | awk '{ print $2 }')"
+		if [ "${iface_test//:/}" = "${interface}" ]; then
+			die "Interface name in use"
+		fi
+		if [ "$debug" -ge "2" ]; then
+			echo "using service name ${interface} as bridge interface name"
+		fi
+		br_interface="${interface}"
+		if [ "$debug" -ge "2" ]; then
+			echo "Setting br_interface to ${interface}"
+		fi
+	else
+		iface_test="$(ip link | grep ${br_interface} | awk '{ print $2 }')"
+		if [ "${iface_test//:/}" = "${br_interface}" ]; then
+			die "Interface name in use"
+		fi
+
+	fi
+
+
+	if [ -n "$vde_pidfile" ]; then
+		# Check if PID exists
+		if [ -e "$vde_pidfile" ]; then
+			if [ "$(ps -p $vde_pidfile -o comm | grep -v "COMMAND")" -eq "vde_switch" ]; then
+				# If it exists, and ps says another VDE is using it, die
+				die "PID File in use by VDE_SWITCH"
+
+			elif [ -z "$(ps -p $vde_pidfile -o comm | grep -v "COMMAND")" ]; then
+				# If the returned output is null, nothing is using that pid anymore
+				rm $vde_pidfile
+				vde_pidfile_arg="--pidfile $vde_pidfile "
+
+			elif [ "$(ps -p $vde_pidfile -o comm | grep -v "COMMAND")" -ne "vde_switch" ]; then
+				# Something else is using this PID file
+				PID_proc="$($vde_pidfile -o comm | grep -v "COMMAND")"
+				die "PID File in use by another process: $PID_proc"
+			fi
+		else
+			# New PID file
+			vde_pidfile_arg="--pidfile $vde_pidfile "
+		fi
+	else
+		# $vde_pidfile is null
+		# Default 
+		vde_pidfile_arg="--pidfile /var/tmp/vde.${br_interface}.pid "
+	fi
+
+	if [ -n "$vde_sock" ]; then
+		# Check if PID exists
+		if [ -e "$vde_sock" ]; then
+			vde_sock_pid="$(lsof -Ua | grep $PWD | grep vde_switc | awk '{print $2}' | uniq)"
+			vde_pid="$(ps -p $vde_pidfile -o comm | grep -v "COMMAND")" 
+
+			if [ "$vde_sock_pid"  -eq "vde_pid" ]; then
+				# If it exists, and ps and lsof agree on PID, we're already running
+				die "SOCKET in use by VDE_SWITCH"
+
+			elif [ "$vde_sock_pid"  -ne "vde_pid" ]; then
+				# If it exists, and ps and lsof disagree  on PID
+				# Someone else is using the socket
+				PID_proc="$($vde_sock_pid -o comm | grep -v "COMMAND")"
+				die "SOCKET in use by another process: $PID_proc"
+
+			elif [ -z "vde_sock_pid" ]; then
+				# Abandoned socket, probaly killed
+				# New Socket
+				rm -rf "$vde_sock"
+				vde_sock_arg="--sock $vde_sock "
+			fi
+		else
+			# New Socket
+			vde_sock_arg="--sock $vde_sock "
+		fi
+	else
+		vde_sock_arg="--sock /var/tmp/vde.${br_interface}.ctl "
+	fi
+
+	
+	## Set up Phy Bridge to attach VDE too
+	ip link add name ${br_interface} type bridge
+
+	## Enable set forward delay, and enable forwarding
+	echo  0 > /sys/devices/virtual/net/${br_interface}/bridge/forward_delay 
+	for f in /proc/sys/net/bridge/bridge-nf-*; do echo 0 > $f; done
+	/sbin/sysctl net.ipv4.conf.${br_interface}.forwarding=${forwarding} >/dev/null 2>&1
+	/sbin/sysctl net.ipv6.conf.${br_interface}.forwarding=${forwarding} >/dev/null 2>&1
+	if [ "$debug" -ge "2" ]; then
+		echo "Enabling IP Forwarding"
+	fi
+	## Turn off STP, as it is handled by VDE
+	echo 0 > /sys/devices/virtual/net/${br_interface}/bridge/stp_state 
+	if [ "$debug" -ge "2" ]; then
+		echo "Disabling STP, Use VDE's FSTP capability VIA RCFile instead"
+	fi
+
+
+	## Set up VDE_Switch
+
+	if [ -n "$vde_mode" ]; then
+		vde_mod_arg="--mode $vde_mode "
+	else
+		vde_mod_arg="--mode 777 "
+	fi
+	if [ "$debug" -ge "2" ]; then
+		echo "vde mode set to: ${vde_mod_arg}"
+	fi
+
+	if [ -n "$vde_group" ]; then
+		vde_group_arg="--group $vde_group "
+	else
+		vde_group_arg="--group kvm "
+		vde_group="kvm"
+	fi
+	if [ "$debug" -ge "2" ]; then
+		echo "vde group set to: ${vde_group_arg}"
+	fi
+
+
+	if [ -n "$vde_tap" ]; then
+		ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
+		ip link set ${vde_tap} promisc on
+		ip link set ${vde_tap} up
+		ip link set dev ${vde_tap} master ${br_interface}
+		vde_tap_arg="--tap $vde_tap "
+		if [ "$debug" -ge "2" ]; then
+			echo "Using supplied name ${vde_tap} for tap device"
+		fi
+	else
+		if [ "$debug" -ge "2" ]; then
+			echo "No tap interface supplied, creating one in the form of \${br_interface}-tap"
+		fi
+		vde_tap="${br_interface}-tap"
+		ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
+		ip link set ${vde_tap} promisc on
+		ip link set ${vde_tap} up
+		ip link set dev ${vde_tap} master ${br_interface}
+		vde_tap_arg="--tap $vde_tap"
+	fi
+
+	if [ "$debug" -ge "2" ]; then
+		echo "vde socket set to: ${vde_sock_arg}"
+	fi
+
+	if [ "$debug" -ge "2" ]; then
+		echo "vde pidfile set to: ${vde_pidfile_arg}"
+	fi
+
+	if [ -n "$vde_rcfile" ]; then
+		vde_rcfile_arg="--rcfile $vde_rcfile "
+	else
+		vde_rcfile_arg=""
+		vde_pidfile="Null"
+	fi
+	if [ "$debug" -ge "2" ]; then
+		echo "vde rcfile set to: ${vde_rcfile}"
+	fi
+		if [ -n "$vde_mgmt" ]; then
+			vde_mgmt_arg="--mgmt $vde_mgmt "
+		else
+			vde_mgmt_arg="--mgmt /var/tmp/vde.${br_interface}.mgmt"
+		fi
+		if [ "$debug" -ge "2" ]; then
+			echo "vde managment socket set to: ${vde_mgmt_arg}"
+		fi
+
+
+		if [ -n "$vde_hub" ]; then
+			vde_hub_arg="--hub " 
+			vde_hub="on"
+		else
+			vde_hub_arg=""
+			vde_hub="off"
+		fi
+		if [ "$debug" -ge "2" ]; then
+			echo "vde hub mode is set to: ${vde_hub}"
+		fi
+
+		vde_args=" $vde_pidfile_arg $vde_hub_arg $vde_rcfile_arg $vde_mgmt_arg $vde_mod_arg $vde_group_arg $vde_tap_arg $vde_sock_arg -daemon"
+		if [ "$debug" -ge "2" ]; then
+			echo "vde args set to: $vde_args"
+		fi
+		vde_switch $vde_args
+
+
+	}
+
+	netif_destroy() {
+
+		if [ -n "$vde_mgmt" ]; then
+			vde_mgmt_arg="-s $vde_mgmt "
+		else
+			vde_mgmt_arg="-s /var/tmp/vde.${br_interface}.mgmt"
+		fi
+		if [ -n "$vde_pidfile" ]; then
+			vde_pid=`cat $vde_pidfile`
+		else
+			vde_pid=`cat /var/tmp/vde.${br_interface}.pid`
+		fi
+		if [ "$debug" -ge "2" ]; then
+			echo "attempt to stop the following VDE proccess:"
+			echo "vde_mgmt: $vde_mgmt_arg"
+			echo "vde_pid: $vde_pid"
+		fi
+		vdecmd_args="$vde_mgmt_arg shutdown"
+		vdecmd $vdecmd_args || kill -s TERM $vde_pid || echo "failed to kill vde_switch running on PID $vde_pid"
+
+	}
+
+	netif_pre_up() {
+		local slave
+		local bcast
+		if [ -n "$slaves" ]; then
+			for slave in ${slaves//netif./}; do
+				ip addr flush dev ${slave}
+				ip link set dev ${slave} master ${br_interface}
+				if [ "$debug" -ge "2" ]; then
+					echo "Setting dev ${slave} master to: ${br_interface}"
+				fi
+			done
+		fi	
+		for ipnm in $ipaddr $ipaddrs; do
+			if [ -n "$(if_ipv4 $ipnm)" ]; then
+				bcast="broadcast $(get_option "$ipnm" broadcast +)"
+			else
+				bcast=""
+			fi
+			ip addr add $(get_ipnm_part "$ipnm") $bcast dev $br_interface || die "Couldn't add $ipnm to $br_interface"
+			if [ "$debug" -ge "2" ]; then
+				echo "Setting dev ${interface} IP to: ${ipm,}"
+			fi
+		done
+
+		for ipnm6 in $ipaddr6 $ipaddrs6; do
+			ip -6 addr add $(get_ipnm_part "$ipnm6") $bcast dev $br_interface || die "Couldn't add $ipnm6 to $br_interface"
+			if [ "$debug" -ge "2" ]; then
+				echo "Setting dev ${interface} IPv6 to: ${ipmn6}"
+			fi
+		done
+
+	}
+
+	netif_pre_down() {
+
+
+		ip link set dev ${vde_tap} nomaster
+		ip link delete dev ${vde_tap}
+
+		local slave
+		local bcast
+		if [ -n "$slaves" ]; then
+			for slave in ${slaves//netif./}; do
+				ip link set dev ${slave} nomaster
+				if [ "$debug" -ge "2" ]; then
+					echo "Setting dev ${slave} master to none"
+				fi
+			done
+		fi	
+		ip link delete dev ${br_interface}
+	}

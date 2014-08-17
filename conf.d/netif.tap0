@@ -1,0 +1,3 @@
+template="tap"
+group="kvm"
+macaddr="10:22:33:44:55:66"

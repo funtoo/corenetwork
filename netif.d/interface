@@ -1,5 +1,16 @@
 #!/bin/sh
 
+netif_create() {
+        if [ -n "$mac_addr" ]; then
+             echo 'mac_addr is depricated and will be removed. Please use "macaddr"'
+        if [ -n "$macaddr" ]; then
+        echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
+        else
+            macaddr=$mac_addr
+        fi
+    fi
+}
+
 netif_pre_up() {
 	local count=-1
 	local label
@@ -27,4 +38,30 @@ netif_pre_up() {
 		fi
 		count=$(( $count + 1 ))	
 	done
+
+        for ipnm6 in $ipaddr6 $ipaddrs6; do
+                if [ $count -ge 0 ]
+                then
+                        label=$interface:$count
+                else
+                        label=""
+                fi
+                if [ -n "$(if_ipv4 $ipnm)" ]
+                then
+                        bcast="broadcast $(get_option "$ipnm" broadcast +)"
+                else
+                        bcast=""
+                fi
+                if [ -z "$label" ]
+                then
+                        ip -6 addr add $(get_ipnm_part "$ipnm") $bcast \
+                                dev $interface || die "Couldn't add $ipnm6 to $interface"
+                else
+                        ip -6 addr add $(get_ipnm_part "$ipnm") $bcast \
+                                label $label dev $interface || die "Couldn't add $ipnm6 to $interface"
+                fi
+                count=$(( $count + 1 ))
+        done
+
+
 }
