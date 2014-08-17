@@ -9,7 +9,7 @@ netif_depend() {
 netif_create() {
         ovs-vsctl --may-exist  add-br $interface
         if [ -n "$mac_addr" ]; then
-             echo 'mac_addr is depricated and will be removed. Please use "macaddr"'
+             echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
         if [ -n "$macaddr" ]; then
         echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
         else

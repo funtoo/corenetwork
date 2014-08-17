@@ -16,7 +16,7 @@ netif_create() {
         fi
         for f in /proc/sys/net/bridge/bridge-nf-*; do echo 0 > $f; done
 	if [ -n "$mac_addr" ]; then
-	     echo 'mac_addr is depricated and will be removed. Please use "macaddr"'
+	     echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
 	if [ -n "$macaddr" ]; then
         echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
         else
