@@ -27,4 +27,3 @@ netif_pre_down() {
 
 	start-stop-daemon --stop --quiet --signal SIGHUP --pidfile "${PIDFILE}"
 }
-

@@ -8,17 +8,15 @@ netif_create() {
 	else
 		ip tuntap add dev $interface mode tap
 	fi
-        if [ -n "$mac_addr" ]; then
-     echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
-     if [ -n "$macaddr" ]; then
-        echo "Warning, \$macaddr is set. Using \$macaddr value $macaddr"
-    else
-         macaddr=$mac_addr
-        echo "Using \$mac_addr value $mac_addr for \$macaddr"
-        fi
-    fi
-
-
+	if [ -n "$mac_addr" ]; then
+		echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
+		if [ -n "$macaddr" ]; then
+			echo "Warning, \$macaddr is set. Using \$macaddr value $macaddr"
+		else
+			macaddr=$mac_addr
+			echo "Using \$mac_addr value $mac_addr for \$macaddr"
+		fi
+	fi
 }
 
 netif_destroy() {
@@ -27,7 +25,4 @@ netif_destroy() {
 
 netif_pre_up() {
 	ip link set $interface promisc on
-	
 }
-
-

@@ -17,4 +17,3 @@ netif_pre_down() {
 netif_post_down() {
 	ip tunnel del $interface
 }
-

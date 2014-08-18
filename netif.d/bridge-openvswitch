@@ -1,75 +1,72 @@
 #!/bin/sh -x
 
 netif_depend() {
-        need ovsdb-server
-        need ovs-controller
-        need ovs-vswitchd
+	need ovsdb-server
+	need ovs-controller
+	need ovs-vswitchd
 }
 
 netif_create() {
-        ovs-vsctl --may-exist  add-br $interface
-        if [ -n "$mac_addr" ]; then
-             echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
-        if [ -n "$macaddr" ]; then
-        echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
-        else
-            macaddr=$mac_addr
-        fi
-    fi
+	ovs-vsctl --may-exist  add-br $interface
+	if [ -n "$mac_addr" ]; then
+		echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
+		if [ -n "$macaddr" ]; then
+			echo "Warning, \$macaddr is set. Using \$macaddr value $maccaddr"
+		else
+			macaddr=$mac_addr
+		fi
+	fi
 	:
 }
 
 netif_destroy() {
-        ovs-vsctl --if-exists del-br $interface
+	ovs-vsctl --if-exists del-br $interface
 }
 
 netif_pre_down() {
-        local slave
+	local slave
 
-        if [ -n "$slaves" ]; then
-                for slave in ${slaves//netif./}; do
-                        ovs-ofctl mod-port $interface ${slave} down
-                        ovs-vsctl --if-exists del-port $interface ${slave}
-                done
-        fi
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
+			ovs-ofctl mod-port $interface ${slave} down
+			ovs-vsctl --if-exists del-port $interface ${slave}
+		done
+	fi
 
-        ovs-ofctl mod-port $interface $interface down
+	ovs-ofctl mod-port $interface $interface down
 }
 
 netif_pre_up() {
-        local slave
-        local bcast
-        if [ -n "$slaves" ]; then
-                for slave in ${slaves//netif./}; do
+	local slave
+	local bcast
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
 			ip addr flush dev ${slave}
-                        ovs-vsctl --may-exist add-port $interface ${slave}
-                        ovs-ofctl mod-port $interface ${slave} up
-                done
-        fi
+			ovs-vsctl --may-exist add-port $interface ${slave}
+			ovs-ofctl mod-port $interface ${slave} up
+		done
+	fi
 
-        for ipnm in $ipaddr $ipaddrs; do
-            if [ -n "$(if_ipv4 $ipnm)" ]; then
-                bcast="broadcast $(get_option "$ipnm" broadcast +)"
-            else
-                bcast=""
-            fi
+	for ipnm in $ipaddr $ipaddrs; do
+		if [ -n "$(if_ipv4 $ipnm)" ]; then
+			bcast="broadcast $(get_option "$ipnm" broadcast +)"
+		else
+			bcast=""
+		fi
 
-            ip addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
-        done
-
-        for ipnm in $ipaddr $ipaddrs; do
-            ip -6 addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
+		ip addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
 	done
 
+	for ipnm in $ipaddr $ipaddrs; do
+		ip -6 addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
+	done
 
-        if [ -n "$stp" ]; then
-            ovs-vsctl --if-exists set bridge $interface stp_enable=true
-        fi
+	if [ -n "$stp" ]; then
+		ovs-vsctl --if-exists set bridge $interface stp_enable=true
+	fi
 
-        if [ -n "$forwarding" ]; then
-            /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
-            /sbin/sysctl net.ipv6.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
-        fi
-
+	if [ -n "$forwarding" ]; then
+		/sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+		/sbin/sysctl net.ipv6.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+	fi
 }
-

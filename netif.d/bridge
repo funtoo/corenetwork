@@ -68,7 +68,6 @@ netif_create() {
 			echo "Disabling STP[Default]"
 		fi
 	fi
-
 }
 
 netif_destroy() {
@@ -119,6 +118,4 @@ netif_pre_up() {
 			echo "Setting Dev ${interface} IPv6 to: ${ipnm6}"
 		fi
 	done
-
-
 }

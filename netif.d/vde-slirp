@@ -1,309 +1,297 @@
 #!/bin/sh
 
 netif_create() {
+	## Set up VDE_Switch
 
+	if [ -n "$vde_mode" ]; then
+		vde_mod_arg="--mode $vde_mode "
+		slirp_mod_arg="-m $vde_mode "
+	else
+		vde_mod_arg="--mode 660 "
+		slirp_mod_arg="-m 660"
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "Setting Slirp,VDE mode to: ${slirp_mod_arg//-m /}"
+	fi
 
-    ## Set up VDE_Switch
+	if [ -n "$vde_group" ]; then
+		vde_group_arg="--group $vde_group "
+	else
+		vde_group_arg="--group kvm "
+		vde_group="kvm"
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "vde group set to: ${vde_group}"
+	fi
 
-    if [ -n "$vde_mode" ]; then
-        vde_mod_arg="--mode $vde_mode "
-        slirp_mod_arg="-m $vde_mode "
-    else
-        vde_mod_arg="--mode 660 "
-        slirp_mod_arg="-m 660"
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "Setting Slirp,VDE mode to: ${slirp_mod_arg//-m /}"
-    fi
+	if [ -n "$vde_tap" ]; then
+		ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
+		ip link set ${vde_tap} promisc on
+		ip link set ${vde_tap} up
+		vde_tap_arg="--tap $vde_tap "
+		if [ "debug" -ge "2" ]; then
+			echo "Using supplied vde_tap: ${vde_tap} for tap interface"
+		fi
+	else
+		if [ "debug" -ge "2" ]; then
+			echo "using service name ${interface} for vde_tap"
+		fi
+		vde_tap="${interface}"
+		ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
+		ip link set ${vde_tap} promisc on
+		ip link set ${vde_tap} up
+		vde_tap_arg="--tap $vde_tap "
+	fi
 
-    if [ -n "$vde_group" ]; then
-        vde_group_arg="--group $vde_group "
-    else
-        vde_group_arg="--group kvm "
-        vde_group="kvm"
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "vde group set to: ${vde_group}"
-    fi
+	if [ -n "$vde_sock" ]; then
+		vde_sock_arg="--sock $vde_sock "
+	else
+		vde_sock_arg="--sock /var/tmp/vde.${interface}.ctl "
+		vde_sock="/var/tmp/vde.${interface}.ctl"
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "Setting vde socket to: $vde_socket"
+	fi
 
+	if [ -n "$vde_pidfile" ]; then
+		vde_pidfile_arg="--pidfile $vde_pid "
+	else
+		vde_pidfile_arg="--pidfile /var/tmp/vde.${interface}.pid "
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "Setting vde pid file to: ${vde_pidfile}"
+	fi
 
+	if [ -n "$slirp_pidfile" ]; then
+		slirp_pidfile_arg="--pidfile $slirp_pidfile "
+	else
+		slirp_pidfile_arg="--pidfile /var/tmp/slirp.${interface}.pid "
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "Setting slirp pid file to: ${slirp_pidfile}"
+	fi
 
-    if [ -n "$vde_tap" ]; then
-        ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
-        ip link set ${vde_tap} promisc on
-        ip link set ${vde_tap} up
-        vde_tap_arg="--tap $vde_tap "
-        if [ "debug" -ge "2" ]; then
-            echo "Using supplied vde_tap: ${vde_tap} for tap interface"
-        fi
-    else
-        if [ "debug" -ge "2" ]; then
-            echo "using service name ${interface} for vde_tap"
-        fi
-        vde_tap="${interface}"
-        ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
-        ip link set ${vde_tap} promisc on
-        ip link set ${vde_tap} up
-        vde_tap_arg="--tap $vde_tap "
-    fi
+	if [ -n "$vde_rcfile" ]; then
+		vde_rcfile_arg="--rcfile $vde_rcfile "
+	else
+		vde_rcfile_arg=""
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "Setting vde rcfile to: ${vde_rcfile}"
+	fi
 
-    if [ -n "$vde_sock" ]; then
-        vde_sock_arg="--sock $vde_sock "
-    else
-        vde_sock_arg="--sock /var/tmp/vde.${interface}.ctl "
-        vde_sock="/var/tmp/vde.${interface}.ctl"
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "Setting vde socket to: $vde_socket"
-    fi
+	if [ -n "$vde_mgmt" ]; then
+		vde_mgmt_arg="--mgmt $vde_mgmt "
+	else
+		vde_mgmt_arg="--mgmt /var/tmp/vde.${interface}.mgmt"
+		vde_mgmt="${vde_mgmt_arg//--mgmt/}"
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "Setting vde managment socket to: ${vde_mgmt}"
+	fi
 
-    if [ -n "$vde_pidfile" ]; then
-        vde_pidfile_arg="--pidfile $vde_pid "
-    else
-        vde_pidfile_arg="--pidfile /var/tmp/vde.${interface}.pid "
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "Setting vde pid file to: ${vde_pidfile}"
-    fi
+	if [  "$vde_hub" -eq "1" ]; then
+		vde_hub_arg="--hub " 
+		vde_hob="on"
+	else
+		vde_hub_arg=""
+		vde_hub="off"
+	fi
+	if [ "debug" -ge "2" ]; then
+		echo "VDE hub is: ${vde_hub}"
+	fi
 
-    if [ -n "$slirp_pidfile" ]; then
-        slirp_pidfile_arg="--pidfile $slirp_pidfile "
-    else
-        slirp_pidfile_arg="--pidfile /var/tmp/slirp.${interface}.pid "
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "Setting slirp pid file to: ${slirp_pidfile}"
-    fi
+	if [ -n "slirp_redir_tcp" ]; then
+		local redir_tcp
+		local redir_debug="Redirecting TCP ports:\n"
+		for redir_tcp in $slirp_redir_tcp; do
+			slirp_tcp_arg="-L ${redir_tcp} "
+			redir_debug="${redir_debug}${redir_tcp}\n"
+		done
+		if [ "debug" -ge "2" ]; then
+			echo "${redir_debug}"
+		fi
+	else
+		slirp_tcp_arg=""
+	fi
 
-    if [ -n "$vde_rcfile" ]; then
-        vde_rcfile_arg="--rcfile $vde_rcfile "
-    else
-        vde_rcfile_arg=""
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "Setting vde rcfile to: ${vde_rcfile}"
-    fi
+	if [ -n "slirp_redir_udp" ]; then
+		local redir_udp
+		local redir_debug="Redirecting UDP ports:\n"
+		for redir_udp in $slirp_redir_udp; do
+			slirp_udp_arg="-U ${redir_udp} "
+			redir_debug="${redir_debug}${redir_tcp}\n"
+		done
+		if [ "debug" -ge "2" ]; then
+			echo "${redir_debug}"
+		fi
+	else
+		slirp_udp_arg=""
+	fi
 
-    if [ -n "$vde_mgmt" ]; then
-        vde_mgmt_arg="--mgmt $vde_mgmt "
-    else
-        vde_mgmt_arg="--mgmt /var/tmp/vde.${interface}.mgmt"
-        vde_mgmt="${vde_mgmt_arg//--mgmt/}"
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "Setting vde managment socket to: ${vde_mgmt}"
-    fi
+	if [ -n "slirp_redir_x" ]; then
+		local redir_x
+		local redir_debug="Redirecting X displays:\n"
+		for redir_x in $slirp_redir_x; do
+			slirp_x_arg="-X ${redir_local} "
+			redir_debug="${redir_debug}${redir_tcp}\n"
+		done
+		if [ "debug" -ge "2" ]; then
+			echo "${redir_debug}"
+		fi
+	else
+		slirp_x_arg=""
+	fi
 
-    if [  "$vde_hub" -eq "1" ]; then
-        vde_hub_arg="--hub " 
-        vde_hob="on"
-    else
-        vde_hub_arg=""
-        vde_hub="off"
-    fi
-    if [ "debug" -ge "2" ]; then
-        echo "VDE hub is: ${vde_hub}"
-    fi
+	if [ -n "slirp_redir_socket" ]; then
+		local redir_socket
+		local redir_debug="Redirecting Unix Sockets:\n"
+		for redir_socket in $slirp_redir_socket; do
+			slirp_socket_arg="-x ${redir_socket} "
+			redir_debug="${redir_debug}${redir_tcp}\n"
+		done
+		if [ "debug" -ge "2" ]; then
+			echo "${redir_debug}"
+		fi
+	else
+		slirp_socket_arg=""
+	fi
 
-    if [ -n "slirp_redir_tcp" ]; then
-        local redir_tcp
-        local redir_debug="Redirecting TCP ports:\n"
-        for redir_tcp in $slirp_redir_tcp; do
-            slirp_tcp_arg="-L ${redir_tcp} "
-            redir_debug="${redir_debug}${redir_tcp}\n"
-        done
-        if [ "debug" -ge "2" ]; then
-            echo "${redir_debug}"
-        fi
-    else
-        slirp_tcp_arg=""
-    fi
+	if [ "$slirp_dhcp" -eq "1" ]; then
+		if [ -n "slirp_dhcp_start" ]; then
+			slirp_dhcp_arg="--dhcp=${slirp_dhcp_start} "
+			if [ "debug" -ge "2" ]; then
+				echo "Setting DHCP starting range to: ${slirp_dhcp_start}"
+			fi
+		else
+			slirp_dhcp_arg="--dhcp  "
+			if [ "debug" -ge "2" ]; then
+				echo "Setting DHCP starting range to: Default"
+			fi
+		fi
+	else
+		slirp_dhcp_arg=""
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp DHCP not enabled"
+		fi
+	fi
 
-    if [ -n "slirp_redir_udp" ]; then
-        local redir_udp
-        local redir_debug="Redirecting UDP ports:\n"
-        for redir_udp in $slirp_redir_udp; do
-            slirp_udp_arg="-U ${redir_udp} "
-            redir_debug="${redir_debug}${redir_tcp}\n"
-        done
-        if [ "debug" -ge "2" ]; then
-            echo "${redir_debug}"
-        fi
-    else
-        slirp_udp_arg=""
-    fi
+	if [ -n "$slirp_tftp" ]; then
+		slirp_tftp="--tftp ${slirp_tftp} "
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp tftp server enabled for directory: ${slirp_tftp}"
+		fi
+	else
+		slirp_tftp=""
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp tftp server not enabled"
+		fi
+	fi
 
-    if [ -n "slirp_redir_x" ]; then
-        local redir_x
-        local redir_debug="Redirecting X displays:\n"
-        for redir_x in $slirp_redir_x; do
-            slirp_x_arg="-X ${redir_local} "
-            redir_debug="${redir_debug}${redir_tcp}\n"
-        done
-        if [ "debug" -ge "2" ]; then
-            echo "${redir_debug}"
-        fi
-    else
-        slirp_x_arg=""
-    fi
+	if [ -n "$slirp_host" ]; then
+		slirp_host_arg="--host ${slirp_host} "
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp host address set to: ${slirp_host}"
+		fi
+	else
+		slirp_host_arg=""
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp host address set to: Default"
+		fi
+	fi
 
-    if [ -n "slirp_redir_socket" ]; then
-        local redir_socket
-        local redir_debug="Redirecting Unix Sockets:\n"
-        for redir_socket in $slirp_redir_socket; do
-            slirp_socket_arg="-x ${redir_socket} "
-            redir_debug="${redir_debug}${redir_tcp}\n"
-        done
-        if [ "debug" -ge "2" ]; then
-            echo "${redir_debug}"
-        fi
-    else
-        slirp_socket_arg=""
-    fi
+	if [ -n "$slirp_dns" ]; then
+		slirp_dns_arg="--dns $slirp_dns "
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp DNS server/proxy set to: ${slirp_dns}"
+		fi
+	else
+		slirp_dns_arg=""
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp DNS Server set to: Default"
+		fi
+	fi
 
-    if [ "$slirp_dhcp" -eq "1" ]; then
-        if [ -n "slirp_dhcp_start" ]; then
-            slirp_dhcp_arg="--dhcp=${slirp_dhcp_start} "
-            if [ "debug" -ge "2" ]; then
-                echo "Setting DHCP starting range to: ${slirp_dhcp_start}"
-            fi
-        else
-            slirp_dhcp_arg="--dhcp  "
-            if [ "debug" -ge "2" ]; then
-                echo "Setting DHCP starting range to: Default"
-            fi
-        fi
-    else
-        slirp_dhcp_arg=""
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp DHCP not enabled"
-        fi
-    fi
+	if [ -n "$slirp_net" ]; then
+		slirp_net=_arg"--network ${slirp_net} "
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp network set to: ${slirp_net}"
+		fi
+	else
+		slirp_net_arg=""
+		if [ "debug" -ge "2" ]; then
+			echo "Slirp network address set to: Default"
+		fi
+	fi
 
-    if [ -n "$slirp_tftp" ]; then
-        slirp_tftp="--tftp ${slirp_tftp} "
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp tftp server enabled for directory: ${slirp_tftp}"
-        fi
-    else
-        slirp_tftp=""
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp tftp server not enabled"
-        fi
-    fi
+	vde_args=" $vde_pidfile_arg $vde_hub_arg $vde_rcfile_arg $vde_mgmt_arg $vde_mod_arg $vde_group_arg "
+	vde_args="${vde_args} $vde_tap_arg $vde_sock_arg -daemon"
 
-    if [ -n "$slirp_host" ]; then
-        slirp_host_arg="--host ${slirp_host} "
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp host address set to: ${slirp_host}"
-        fi
-    else
-        slirp_host_arg=""
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp host address set to: Default"
-        fi
-    fi
+	slirp_args=" $vde_group_arg $vde_sock_arg $slirp_mod_arg $slirp_pidfile_arg $slirp_host_arg $slirp_dns_arg $slip_net_arg "
+	slirp_args="$slirp_args $slirp_tftp_arg $slirp_socket_arg $slirp_x_arg $slirp_udp_arg $slirp_tcp_arg -daemon"
 
-    if [ -n "$slirp_dns" ]; then
-        slirp_dns_arg="--dns $slirp_dns "
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp DNS server/proxy set to: ${slirp_dns}"
-        fi
-    else
-        slirp_dns_arg=""
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp DNS Server set to: Default"
-        fi
-    fi
-
-    if [ -n "$slirp_net" ]; then
-        slirp_net=_arg"--network ${slirp_net} "
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp network set to: ${slirp_net}"
-        fi
-    else
-        slirp_net_arg=""
-        if [ "debug" -ge "2" ]; then
-            echo "Slirp network address set to: Default"
-        fi
-    fi
-
-
-    vde_args=" $vde_pidfile_arg $vde_hub_arg $vde_rcfile_arg $vde_mgmt_arg $vde_mod_arg $vde_group_arg "
-    vde_args="${vde_args} $vde_tap_arg $vde_sock_arg -daemon"
-
-    slirp_args=" $vde_group_arg $vde_sock_arg $slirp_mod_arg $slirp_pidfile_arg $slirp_host_arg $slirp_dns_arg $slip_net_arg "
-    slirp_args="$slirp_args $slirp_tftp_arg $slirp_socket_arg $slirp_x_arg $slirp_udp_arg $slirp_tcp_arg -daemon"
-
-    if [ "debug" -ge "2" ]; then
-        echo "slirp_args: $slirp_args"
-        echo "vde_args: $vde_args"
-    fi
-    vde_switch $vde_args
-    slirpvde $slirp_args
-
-
+	if [ "debug" -ge "2" ]; then
+		echo "slirp_args: $slirp_args"
+		echo "vde_args: $vde_args"
+	fi
+	vde_switch $vde_args
+	slirpvde $slirp_args
 }
 
 netif_destroy() {
+	if [ -n "${vde_mgmt}" ]; then
+		vde_mgmt_arg="-s ${vde_mgmt} "
+	else
+		vde_mgmt_arg="-s /var/tmp/vde.${vde_tap}.mgmt"
+	fi
+	if [ -n "${vde_pidfile}" ]; then
+		vde_pid=`cat ${vde_pidfile}`
+	else
+		vde_pid=`cat /var/tmp/vde.${interface}.pid`
+	fi
+	if [ -n "${slirp_pidfile}" ]; then
+		slirp_pid=`cat ${slirp_pidfile}`
+	else
+		slirp_pid=`cat /var/tmp/slirp.${interface}.pid`
+	fi
+	if [ "debug" -ge "1" ]; then
+		echo "Terminating the following VDE and SLIRP processes:"
+		echo "vde_mgmt: ${vde_mgmt_arg}"
+		echo "vde_pid: ${vde_pid}"
+		echo "slirp_pid: ${slirp_pid}"
+	fi
 
-    if [ -n "${vde_mgmt}" ]; then
-        vde_mgmt_arg="-s ${vde_mgmt} "
-    else
-        vde_mgmt_arg="-s /var/tmp/vde.${vde_tap}.mgmt"
-    fi
-    if [ -n "${vde_pidfile}" ]; then
-        vde_pid=`cat ${vde_pidfile}`
-    else
-        vde_pid=`cat /var/tmp/vde.${interface}.pid`
-    fi
-    if [ -n "${slirp_pidfile}" ]; then
-        slirp_pid=`cat ${slirp_pidfile}`
-    else
-        slirp_pid=`cat /var/tmp/slirp.${interface}.pid`
-    fi
-    if [ "debug" -ge "1" ]; then
-        echo "Terminating the following VDE and SLIRP processes:"
-        echo "vde_mgmt: ${vde_mgmt_arg}"
-        echo "vde_pid: ${vde_pid}"
-        echo "slirp_pid: ${slirp_pid}"
-    fi
+	vdecmd_args="${vde_mgmt_arg} shutdown"
+	kill -s TERM ${slirp_pid} && if [ -n "`ps -p ${slirp_pid} | grep -v "PID"`" ]; then
+		die "failed to kill slirpvde running on ${slirp_pid}"
+	else
+		echo "killed slirpvde proccess running on ${slirp_pid}"
+	fi
+	vdecmd ${vdecmd_args} || kill -s TERM ${vde_pid} || die "failed to kill vde_switch running on PID ${vde_pid}"
+}
 
-    vdecmd_args="${vde_mgmt_arg} shutdown"
-    kill -s TERM ${slirp_pid} && if [ -n "`ps -p ${slirp_pid} | grep -v "PID"`" ]; then
-    die "failed to kill slirpvde running on ${slirp_pid}"
-else
-    echo "killed slirpvde proccess running on ${slirp_pid}"
-fi
-vdecmd ${vdecmd_args} || kill -s TERM ${vde_pid} || die "failed to kill vde_switch running on PID ${vde_pid}"
+netif_pre_up() {
+	for ipnm in ${ipaddr} ${ipaddrs}; do
+		if [ -n "$(if_ipv4 $ipnm)" ]; then
+			bcast="broadcast $(get_option "${ipnm}" broadcast +)"
+		else
+			bcast=""
+		fi
+		ip addr add $(get_ipnm_part "${ipnm}") ${bcast} dev ${vde_tap} || die "Couldn't add ${ipnm} to ${vde_tap}"
+		if [ "debug" -ge "2" ]; then
+			echo "Setting Dev ${vde_tap} ipv4 to: ${ipnm}"
+		fi
+	done
 
-        }
+	for ipnm6 in ${ipaddr6} ${ipaddrs6}; do
+		ip -6 addr add $(get_ipnm_part "${ipnm6}") ${bcast} dev ${vde_tap} || die "Couldn't add ${ipnm6} to ${vde_tap}"
+		if [ "debug" -ge "2" ]; then
+			echo "Setting Dev ${vde_tap} ipv6 to: ${ipnm6}"
+		fi
+	done
+}
 
-        netif_pre_up() {
-            for ipnm in ${ipaddr} ${ipaddrs}; do
-                if [ -n "$(if_ipv4 $ipnm)" ]; then
-                    bcast="broadcast $(get_option "${ipnm}" broadcast +)"
-                else
-                    bcast=""
-                fi
-                ip addr add $(get_ipnm_part "${ipnm}") ${bcast} dev ${vde_tap} || die "Couldn't add ${ipnm} to ${vde_tap}"
-                if [ "debug" -ge "2" ]; then
-                    echo "Setting Dev ${vde_tap} ipv4 to: ${ipnm}"
-                fi
-            done
-
-            for ipnm6 in ${ipaddr6} ${ipaddrs6}; do
-                ip -6 addr add $(get_ipnm_part "${ipnm6}") ${bcast} dev ${vde_tap} || die "Couldn't add ${ipnm6} to ${vde_tap}"
-                if [ "debug" -ge "2" ]; then
-                    echo "Setting Dev ${vde_tap} ipv6 to: ${ipnm6}"
-                fi
-            done
-
-        }
-
-        netif_pre_down() {
-
-            ip link set dev ${vde_tap} nomaster
-            ip link delete dev ${vde_tap}
-
-        }
+netif_pre_down() {
+	ip link set dev ${vde_tap} nomaster
+	ip link delete dev ${vde_tap}
+}

@@ -1,50 +1,46 @@
 #!/bin/sh
 
 netif_create() {
-
 	ip link add name $interface type bond
 }
 
 netif_destroy() {
-
-ip link delete dev ${interface}
-
+	ip link delete dev ${interface}
 }
-netif_pre_up() {
 
-        for ipnm in $ipaddr $ipaddrs; do
-                ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
-        done
-        for ipnm6 in $ipaddr6 $ipaddrs6; do
-                ip -6 addr add $ipnm6 dev $interface || die "Couldn't add $ipnm6 to $interface"
-        done
+netif_pre_up() {
+	for ipnm in $ipaddr $ipaddrs; do
+		ip addr add $ipnm dev $interface || die "Couldn't add $ipnm to $interface"
+	done
+	for ipnm6 in $ipaddr6 $ipaddrs6; do
+		ip -6 addr add $ipnm6 dev $interface || die "Couldn't add $ipnm6 to $interface"
+	done
 }
 
 netif_post_up() {
-    require slaves
+	require slaves
 	local slave
-    local bcast
-     if [ -n "$slaves" ]; then
-         for slave in ${slaves//netif./}; do
+	local bcast
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
+			ip link set ${slave} master ${interface}
+		done
+	fi
 
-        ip link set ${slave} master ${interface}
-			done
-		fi
-
-		if [ -n "$polic"]; then
-		 echo "${policy}" > /sys/class/net/${interface}/bonding
-		else
-			echo "policy required. Please use one of the following policies:"
-			echo "active-backup, balance-rr, balance-xor, balance-tlb, balance-alb, broadcast, 802.3ad"
-		fi
+	if [ -n "$polic"]; then
+		echo "${policy}" > /sys/class/net/${interface}/bonding
+	else
+		echo "policy required. Please use one of the following policies:"
+		echo "active-backup, balance-rr, balance-xor, balance-tlb, balance-alb, broadcast, 802.3ad"
+	fi
 }
 
 netif_pre_down() {
 	local slave
-    local bcast
-     if [ -n "$slaves" ]; then
-         for slave in ${slaves//netif./}; do
-        ip link set ${slave} nomaster
-			done
-		fi
+	local bcast
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
+			ip link set ${slave} nomaster
+		done
+	fi
 }

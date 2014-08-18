@@ -5,7 +5,6 @@ if [ -z "$debug" ]; then
 fi
 
 netif_create() {
-
 	# Check to see if interface is already in use
 	if [ -z "${br_interace}" ]; then
 		iface_test="$(ip link | grep ${interface} | awk '{ print $2 }')"
@@ -26,7 +25,6 @@ netif_create() {
 		fi
 
 	fi
-
 
 	if [ -n "$vde_pidfile" ]; then
 		# Check if PID exists
@@ -85,7 +83,6 @@ netif_create() {
 		vde_sock_arg="--sock /var/tmp/vde.${br_interface}.ctl "
 	fi
 
-	
 	## Set up Phy Bridge to attach VDE too
 	ip link add name ${br_interface} type bridge
 
@@ -102,7 +99,6 @@ netif_create() {
 	if [ "$debug" -ge "2" ]; then
 		echo "Disabling STP, Use VDE's FSTP capability VIA RCFile instead"
 	fi
-
 
 	## Set up VDE_Switch
 
@@ -124,7 +120,6 @@ netif_create() {
 	if [ "$debug" -ge "2" ]; then
 		echo "vde group set to: ${vde_group_arg}"
 	fi
-
 
 	if [ -n "$vde_tap" ]; then
 		ip tuntap add dev ${vde_tap} mode tap group ${vde_group}
@@ -173,7 +168,6 @@ netif_create() {
 			echo "vde managment socket set to: ${vde_mgmt_arg}"
 		fi
 
-
 		if [ -n "$vde_hub" ]; then
 			vde_hub_arg="--hub " 
 			vde_hub="on"
@@ -190,80 +184,73 @@ netif_create() {
 			echo "vde args set to: $vde_args"
 		fi
 		vde_switch $vde_args
+}
 
+netif_destroy() {
+	if [ -n "$vde_mgmt" ]; then
+		vde_mgmt_arg="-s $vde_mgmt "
+	else
+		vde_mgmt_arg="-s /var/tmp/vde.${br_interface}.mgmt"
+	fi
+	if [ -n "$vde_pidfile" ]; then
+		vde_pid=`cat $vde_pidfile`
+	else
+		vde_pid=`cat /var/tmp/vde.${br_interface}.pid`
+	fi
+	if [ "$debug" -ge "2" ]; then
+		echo "attempt to stop the following VDE proccess:"
+		echo "vde_mgmt: $vde_mgmt_arg"
+		echo "vde_pid: $vde_pid"
+	fi
+	vdecmd_args="$vde_mgmt_arg shutdown"
+	vdecmd $vdecmd_args || kill -s TERM $vde_pid || echo "failed to kill vde_switch running on PID $vde_pid"
+}
 
-	}
-
-	netif_destroy() {
-
-		if [ -n "$vde_mgmt" ]; then
-			vde_mgmt_arg="-s $vde_mgmt "
+netif_pre_up() {
+	local slave
+	local bcast
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
+			ip addr flush dev ${slave}
+			ip link set dev ${slave} master ${br_interface}
+			if [ "$debug" -ge "2" ]; then
+				echo "Setting dev ${slave} master to: ${br_interface}"
+			fi
+		done
+	fi	
+	for ipnm in $ipaddr $ipaddrs; do
+		if [ -n "$(if_ipv4 $ipnm)" ]; then
+			bcast="broadcast $(get_option "$ipnm" broadcast +)"
 		else
-			vde_mgmt_arg="-s /var/tmp/vde.${br_interface}.mgmt"
+			bcast=""
 		fi
-		if [ -n "$vde_pidfile" ]; then
-			vde_pid=`cat $vde_pidfile`
-		else
-			vde_pid=`cat /var/tmp/vde.${br_interface}.pid`
-		fi
+		ip addr add $(get_ipnm_part "$ipnm") $bcast dev $br_interface || die "Couldn't add $ipnm to $br_interface"
 		if [ "$debug" -ge "2" ]; then
-			echo "attempt to stop the following VDE proccess:"
-			echo "vde_mgmt: $vde_mgmt_arg"
-			echo "vde_pid: $vde_pid"
+			echo "Setting dev ${interface} IP to: ${ipm,}"
 		fi
-		vdecmd_args="$vde_mgmt_arg shutdown"
-		vdecmd $vdecmd_args || kill -s TERM $vde_pid || echo "failed to kill vde_switch running on PID $vde_pid"
+	done
 
-	}
+	for ipnm6 in $ipaddr6 $ipaddrs6; do
+		ip -6 addr add $(get_ipnm_part "$ipnm6") $bcast dev $br_interface || die "Couldn't add $ipnm6 to $br_interface"
+		if [ "$debug" -ge "2" ]; then
+			echo "Setting dev ${interface} IPv6 to: ${ipmn6}"
+		fi
+	done
+}
 
-	netif_pre_up() {
-		local slave
-		local bcast
-		if [ -n "$slaves" ]; then
-			for slave in ${slaves//netif./}; do
-				ip addr flush dev ${slave}
-				ip link set dev ${slave} master ${br_interface}
-				if [ "$debug" -ge "2" ]; then
-					echo "Setting dev ${slave} master to: ${br_interface}"
-				fi
-			done
-		fi	
-		for ipnm in $ipaddr $ipaddrs; do
-			if [ -n "$(if_ipv4 $ipnm)" ]; then
-				bcast="broadcast $(get_option "$ipnm" broadcast +)"
-			else
-				bcast=""
-			fi
-			ip addr add $(get_ipnm_part "$ipnm") $bcast dev $br_interface || die "Couldn't add $ipnm to $br_interface"
+netif_pre_down() {
+	ip link set dev ${vde_tap} nomaster
+	ip link delete dev ${vde_tap}
+
+	local slave
+	local bcast
+	if [ -n "$slaves" ]; then
+		for slave in ${slaves//netif./}; do
+			ip link set dev ${slave} nomaster
 			if [ "$debug" -ge "2" ]; then
-				echo "Setting dev ${interface} IP to: ${ipm,}"
+				echo "Setting dev ${slave} master to none"
 			fi
 		done
-
-		for ipnm6 in $ipaddr6 $ipaddrs6; do
-			ip -6 addr add $(get_ipnm_part "$ipnm6") $bcast dev $br_interface || die "Couldn't add $ipnm6 to $br_interface"
-			if [ "$debug" -ge "2" ]; then
-				echo "Setting dev ${interface} IPv6 to: ${ipmn6}"
-			fi
-		done
-
-	}
-
-	netif_pre_down() {
-
-
-		ip link set dev ${vde_tap} nomaster
-		ip link delete dev ${vde_tap}
-
-		local slave
-		local bcast
-		if [ -n "$slaves" ]; then
-			for slave in ${slaves//netif./}; do
-				ip link set dev ${slave} nomaster
-				if [ "$debug" -ge "2" ]; then
-					echo "Setting dev ${slave} master to none"
-				fi
-			done
-		fi	
-		ip link delete dev ${br_interface}
-	}
+	fi	
+	ip link delete dev ${br_interface}
+}

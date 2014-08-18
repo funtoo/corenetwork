@@ -86,8 +86,8 @@ start() {
 		modprobe -q ipv6
 	fi
 	if [ "$vlanmode" != "off" ]; then
-	       	if [ ! -d /proc/net/vlan ]; then
-		       	modprobe -q 8021q
+		if [ ! -d /proc/net/vlan ]; then
+			modprobe -q 8021q
 			if [ ! -d /proc/net/vlan ]; then
 				eerror "VLAN for interface $interface could not be configured:"
 				die " \n802.1q support is not present in this kernel."
