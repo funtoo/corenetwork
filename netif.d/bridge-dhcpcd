@@ -4,7 +4,7 @@ DHCPCD="/sbin/dhcpcd"
 PIDFILE="/var/run/dhcpcd-${interface}.pid"
 
 netif_depend() {
-	need dhcpd
+	need dhcpcd
 }
 
 netif_create() {
