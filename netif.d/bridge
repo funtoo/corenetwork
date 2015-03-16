@@ -14,30 +14,22 @@ netif_create() {
 		fi
 	fi 
 
-	if [ "$forwarding" -eq "1" ]; then
+	if [ "$forwarding" -eq "0" ]; then
+		if [ "$debug" -ge "2" ]; then
+			echo "IP Forwarding not enabled"
+		fi
+	else 
 		for f in /proc/sys/net/bridge/bridge-nf-*; do echo 0 > $f; done
 		/sbin/sysctl net.ipv4.conf.${interface}.forwarding=1 >/dev/null 2>&1
 		/sbin/sysctl net.ipv6.conf.${interface}.forwarding=1 >/dev/null 2>&1
 		if [ "$debug" -ge "2" ]; then
 			echo "Enabling IP forwarding"
-		fi
-	elif [ "$forwarding" -eq "0" ]; then
-		if [ "$debug" -ge "2" ]; then
-			echo "IP Forwarding not enabled"
-		fi
-	else
-		for f in /proc/sys/net/bridge/bridge-nf-*; do echo 0 > $f; done
-		/sbin/sysctl net.ipv4.conf.${interface}.forwarding=1 >/dev/null 2>&1
-		/sbin/sysctl net.ipv6.conf.${interface}.forwarding=1 >/dev/null 2>&1
-		if [ "$debug" -ge "2" ]; then
-			echo "Enabling IP forwarding[Default]"
-		fi
 	fi 
 
 	if [ -n "$mac_addr" ]; then
 		echo 'mac_addr is deprecated and will be removed. Please use "macaddr"'
 		if [ -n "$macaddr" ]; then
-			echo "Warning, \$macaddr is set. Using \$macaddr value $macaddr"
+			echo "Warning: \$macaddr is set. Using \$macaddr value $macaddr"
 		else
 			macaddr=$mac_addr
 			echo "Using \$mac_addr value $mac_addr for \$macaddr"
