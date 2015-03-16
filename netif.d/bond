@@ -27,7 +27,7 @@ netif_post_up() {
 		done
 	fi
 
-	if [ -n "$polic"]; then
+	if [ -n "$policy"]; then
 		echo "${policy}" > /sys/class/net/${interface}/bonding
 	else
 		echo "policy required. Please use one of the following policies:"
