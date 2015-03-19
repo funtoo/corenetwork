@@ -32,8 +32,4 @@ netif_pre_up() {
 	if [ -n "$forwarding" ]; then
 	    /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
 	fi 
-
-
 }
-
-

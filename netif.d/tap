@@ -15,8 +15,5 @@ netif_destroy() {
 }
 
 netif_pre_up() {
-	if [ -n "$mac_addr" ]; then
-		ip link set $interface address $mac_addr
-	fi
 	ip link set $interface promisc on
 }
