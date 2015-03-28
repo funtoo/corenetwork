@@ -99,7 +99,7 @@ start() {
 	ip addr flush dev $interface scope global > /dev/null 2>&1
 	netif_pre_up
 	if [ -n "$mac_replace" ]; then
-		ip link set dev interface address $mac_replace || die "Couldn't set MAC to $mac_replace."
+		ip link set dev $interface address $mac_replace || die "Couldn't set MAC to $mac_replace."
 	fi
 	debug ip link set $interface up
 	if [ -n "$mtu" ]; then
