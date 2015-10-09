@@ -71,7 +71,7 @@ debug() {
 depend() {
 	need localmount
 	if [ "$vlanmode" != "off" ]; then
-		if [ "${trunk#netif.}" != "${trunk}" ];
+		if [ "${trunk#netif.}" != "${trunk}" ]; then
 			#begins with netif
 			need "netif.${trunk}"
 		else
