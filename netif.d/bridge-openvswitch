@@ -18,7 +18,7 @@ netif_pre_down() {
         local slave
 
         if [ -n "$slaves" ]; then
-                for slave in ${slaves//net./}; do
+                for slave in $(get_interface_names $slaves); do
                         ovs-ofctl mod-port $interface ${slave} down
                         ovs-vsctl --if-exists del-port $interface ${slave}
                 done
@@ -31,7 +31,7 @@ netif_pre_up() {
         local slave
         local bcast
         if [ -n "$slaves" ]; then
-                for slave in ${slaves//net./}; do
+                for slave in $(get_interface_names $slaves); do
                         ovs-vsctl --may-exist add-port $interface ${slave}
                         ovs-ofctl mod-port $interface ${slave} up
                 done

@@ -70,7 +70,15 @@ debug() {
 
 depend() {
 	need localmount
-	[ "$vlanmode" != "off" ] && need "net.${trunk}"
+	if [ "$vlanmode" != "off" ]; then
+		if [ "${trunk#netif.}" != "${trunk}" ];
+			#begins with netif
+			need "netif.${trunk}"
+		else
+			# New-style scripts should have trunk point to the actual script name
+			need "${trunk}"
+		fi
+	fi
 	[ -n "$slaves" ] && need $slaves
 	netif_depend
 }
@@ -94,7 +102,8 @@ start() {
 			fi
 		fi
 		require trunk vlan
-		ip link add name ${interface} link ${trunk} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
+		trunk_int="$(get_trunk_int ${trunk})"
+		ip link add name ${interface} link ${trunk_int} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
 	fi
 	ip addr flush dev $interface scope global > /dev/null 2>&1
 	netif_pre_up
@@ -191,6 +200,27 @@ get_option() {
 	done
 	# return default (if any)
 	echo "$3"
+}
+
+# This removes the leading part of the network script, up to and including the first '.', to grab the interface name
+
+get_interface_names() {
+	for ifn in $*; do
+		echo ${ifn#*.}
+	done
+}
+
+# We are migrating from having trunk=eth0 to trunk=net.eth0. This following function is used to implement backwards
+# compatibility. If we see $trunk existing in /etc/init.d, then we assume it has a net. or netif. prefix we need to
+# remove to get the interface name. Otherwise, we assume it contains the interface name itself, such as eth0, and
+# use it as-is.
+
+get_trunk_int() {
+	if [ -e /etc/init.d/$1 ]; then
+		echo $(get_interface_name $1)
+	else
+		echo $1
+	fi
 }
 
 start_pre() {
