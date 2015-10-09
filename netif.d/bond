@@ -8,9 +8,9 @@ netif_pre_up() {
 }
 
 netif_post_up() {
-        ifenslave $interface ${slaves//netif./}
+        ifenslave $interface ${slaves//net./}
 }
 
 netif_pre_down() {
-        ifenslave -d $interface ${slaves//netif./}
+        ifenslave -d $interface ${slaves//net./}
 }

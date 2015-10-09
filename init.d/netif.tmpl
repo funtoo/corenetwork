@@ -6,7 +6,7 @@
 # rather than running "live" commands. This way "stop" will work correctly at all times.
 
 # next line: INT = deprecated, support it for backwards compat:
-INT=${RC_SVCNAME#netif.}
+INT=${RC_SVCNAME#net.}
 interface=${interface:-$INT}
 
 [ "$interface" = "tmpl" ] && exit 0
@@ -70,7 +70,7 @@ debug() {
 
 depend() {
 	need localmount
-	[ "$vlanmode" != "off" ] && need "netif.${trunk}"
+	[ "$vlanmode" != "off" ] && need "net.${trunk}"
 	[ -n "$slaves" ] && need $slaves
 	netif_depend
 }
@@ -105,7 +105,7 @@ start() {
 	if [ -n "$mtu" ]; then
 		ip link set $interface mtu $mtu
 		if [ -n "$slaves" ]; then
-			for slave in ${slaves//netif./}; do
+			for slave in ${slaves//net./}; do
 				ip link set $slave mtu $mtu || eend $?
 			done
 		fi

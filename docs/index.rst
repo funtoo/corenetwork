@@ -83,7 +83,7 @@ network interfaces.
 
 Here are the key components of the template-based network configuration system:
 
-0) ``/etc/init.d/netif.lo`` -- An init script that configures the localhost
+0) ``/etc/init.d/net.lo`` -- An init script that configures the localhost
    interface.
 
 1) ``/etc/netif.d`` -- This is a directory that contains various network
@@ -96,13 +96,13 @@ Here are the key components of the template-based network configuration system:
    to your system by creating **symbolic links** to this file in ``/etc/init.d``.
     
 So, if you wanted to use this system to configure ``eth0`` with a static
-IP address, you would create a ``netif.eth0`` symlink to ``netif.tmpl``
+IP address, you would create a ``net.eth0`` symlink to ``netif.tmpl``
 as follows::
 
         # cd /etc/init.d
-        # ln -s netif.tmpl netif.eth0
+        # ln -s netif.tmpl net.eth0
 
-Then, you would create an ``/etc/conf.d/netif.eth0`` configuration file
+Then, you would create an ``/etc/conf.d/net.eth0`` configuration file
 that would specify which template to use from the ``/etc/netif.d``
 directory::
 
@@ -167,7 +167,7 @@ VLAN Variables
 ~~~~~~~~~~~~~~
 
 VLAN support is enabled by default for all network configuration scripts. If
-a network script has a name in the format ``netif.ethX.Y``, then it is assumed
+a network script has a name in the format ``net.ethX.Y``, then it is assumed
 to be a VLAN interface referencing trunk ``ethX`` and VLAN ID ``Y``. If you
 desire a custom name for your VLAN interface, you can name your interface 
 whatever you'd like and specify the following variables in your interface
@@ -184,7 +184,7 @@ OpenResolv and resolv.conf
 --------------------------
 
 For the network configuration above, OpenResolv will be used to set DNS
-information when the ``netif.eth0`` is brought up. The OpenResolv framework
+information when the ``net.eth0`` is brought up. The OpenResolv framework
 will add entries to ``/etc/resolv.conf``, and will also handle removing these
 entries when the interface is brought down. This way, ``/etc/resolv.conf``
 should always contain current information and should not need to be manually
@@ -195,15 +195,15 @@ Network-Dependent Services
 --------------------------
 
 One important difference between Gentoo Linux and Funtoo Linux is that, in Funtoo
-Linux, network-dependent services only strictly depend on ``netif.lo``. This
+Linux, network-dependent services only strictly depend on ``net.lo``. This
 means that if another network service requires an interface to be up, such as
 ``samba`` requiring ``eth0``, then the system administrator must specify this
 relationship by adding the following line to ``/etc/conf.d/samba``::
 
-        rc_need="netif.eth0"
+        rc_need="net.eth0"
 
-This will have the effect of ensuring that ``netif.eth0`` is started prior
-to ``samba`` and that ``samba`` is stopped prior to stopping ``netif.eth0``.
+This will have the effect of ensuring that ``net.eth0`` is started prior
+to ``samba`` and that ``samba`` is stopped prior to stopping ``net.eth0``.
 
 Many network services, especially those that listen on all network intefaces,
 don't need an ``rc_need`` line in order to function properly. Avoiding the
@@ -240,7 +240,7 @@ runlevel.
 To complete our multiple network configuration, we would now do something
 like this::
 
-        # rc-update add netif.eth0 static
+        # rc-update add net.eth0 static
         # rc-update add dhcpcd dynamic
 
 To switch to or between each runlevel, we would type::
@@ -269,8 +269,8 @@ runlevel-specific conf.d files by appending a ``.<runlevel>`` suffix. In this
 particular example, we could imagine a situation where we had two child
 runlevels named ``home`` and ``work``::
 
-        /etc/conf.d/netif.eth0.home
-        /etc/conf.d/netif.eth0.work
+        /etc/conf.d/net.eth0.home
+        /etc/conf.d/net.eth0.work
 
 Note that this feature works for all init scripts, not just network
 configuration scripts. 
@@ -285,7 +285,7 @@ variable::
 
         macaddr="00:15:17:19:b6:a3"
 
-If this MAC address is part of the ``netif.lan`` configuration file, then when
+If this MAC address is part of the ``net.lan`` configuration file, then when
 this interface starts, whatever interface currently has the MAC address of
 00:15:17:19:b6:a3 (i.e. ``eth5``) will be renamed to ``lan`` prior to the
 interface being brought up, and will show up in ``ifconfig`` and ``ip``
@@ -296,7 +296,7 @@ Basic VLAN Configuration
 
 The standard ``interface`` template supports VLANs. To use VLAN support, first
 configure the trunk interface using the ``interface-noip`` template. Assuming
-``eth1`` is trunked, you would create the file ``/etc/conf.d/netif.eth1`` with
+``eth1`` is trunked, you would create the file ``/etc/conf.d/net.eth1`` with
 the following contents::
 
         template="interface-noip"
@@ -305,11 +305,11 @@ Then, create a network interface symlink for the trunk and add it to your
 default runlevel::
 
         # cd /etc/init.d
-        # ln -s netif.tmpl netif.eth1
-        # rc-update add netif.eth1 default
+        # ln -s netif.tmpl net.eth1
+        # rc-update add net.eth1 default
 
 Now, assuming you wanted to configure a VLAN of 32, you would create a config
-file named ``/etc/conf.d/netif.eth1.32`` that looks something like this::
+file named ``/etc/conf.d/net.eth1.32`` that looks something like this::
 
         template="interface"
         ipaddr="1.2.3.4/24"
@@ -320,12 +320,12 @@ Then, create a VLAN network interface symlink and add it to your default
 runlevel::
 
         # cd /etc/init.d
-        # ln -s netif.tmpl netif.eth1.32
-        # rc-update add netif.eth1.32 default
+        # ln -s netif.tmpl net.eth1.32
+        # rc-update add net.eth1.32 default
 
 The Funtoo network configuration scripts will automatically recognize the
-filename ``netif.eth1.32`` as being VLAN 32 of trunk interface
-``netif.eth1``. 
+filename ``net.eth1.32`` as being VLAN 32 of trunk interface
+``net.eth1``. 
 
 When the VLAN interface is brought up, it will be named ``eth1.32``.
 
@@ -335,9 +335,9 @@ Custom VLAN Names
 However, sometimes you may want to turn off automatic file-based VLAN naming
 and give your VLAN interface a custom name, such as ``mgmt``. To do this, you
 would set up the trunk interface in the exact same way as described above,
-but instead of creating a ``netif.eth1.32`` interface, you would create a
-``netif.mgmt`` interface, and specify ``vlan`` and ``trunk`` in the
-``/etc/conf.d/netif.mgmt`` config file, as follows::
+but instead of creating a ``net.eth1.32`` interface, you would create a
+``net.mgmt`` interface, and specify ``vlan`` and ``trunk`` in the
+``/etc/conf.d/net.mgmt`` config file, as follows::
 
         template="interface"
         vlan="32"
@@ -352,11 +352,11 @@ Both ``trunk`` and ``vlan`` must be specified -- you can't specify just
 one.
 
 Then you would simply create a VLAN network interface symlink for
-``netif.mgmt``::
+``net.mgmt``::
 
         # cd /etc/init.d
-        # ln -s netif.tmpl netif.mgmt
-        # rc-update add netif.mgmt default
+        # ln -s netif.tmpl net.mgmt
+        # rc-update add net.mgmt default
 
 When the VLAN interface is brought up, it will be named ``mgmt``.
 
@@ -412,11 +412,11 @@ performed - such as removing child interfaces or destroying a bridge using
 
 When you create your own network configuration template, the following
 capabilities are available for use automatically, as long as the appropriate
-variables are set in the ``/etc/conf.d/netif.<ifname>`` file,, without
+variables are set in the ``/etc/conf.d/net.<ifname>`` file,, without
 requiring any explicit steps on your part:
 
 - DNS configuration using ``domain`` and ``nameservers`` config settings. OpenResolv is used automatically.
-- VLAN configuration using auto-naming (``netif.ethX.Y``) or via custom naming with ``trunk`` and ``vlan`` config settings.
+- VLAN configuration using auto-naming (``net.ethX.Y``) or via custom naming with ``trunk`` and ``vlan`` config settings.
 - Default gateway configuration using the ``gateway`` setting.
 - MTU configuration using the ``mtu`` setting.
 - Auto-depend (and auto-MTU configuration) of slave interfaces specified using ``slaves`` setting. 

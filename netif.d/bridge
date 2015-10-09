@@ -12,7 +12,7 @@ netif_pre_up() {
 	local slave
 	local bcast
 	if [ -n "$slaves" ]; then
-		for slave in ${slaves//netif./}; do
+		for slave in ${slaves//net./}; do
 			brctl addif $interface ${slave}
 		done
 	fi	
