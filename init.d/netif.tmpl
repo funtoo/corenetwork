@@ -1,5 +1,5 @@
 #!/sbin/runscript
-# Copyright (c) 2007-2010 Funtoo Technologies
+# Copyright (c) 2007-2015 Funtoo Technologies
 # All rights reserved. Released under the 2-clause BSD license.
 
 # TODO - generate cached config for /etc/init.d/foo, use them for starting and stopping
@@ -12,7 +12,6 @@ interface=${interface:-$INT}
 [ "$interface" = "tmpl" ] && exit 0
 
 if [ -z "$template" ]; then
-	eerror "Please specify a template (template=) for $RC_SVCNAME"
 	exit 1
 fi
 
@@ -78,6 +77,9 @@ depend() {
 			# New-style scripts should have trunk point to the actual script name
 			need "${trunk}"
 		fi
+	fi
+	if [ -n "$gateway" ]] || [ -n "$gateway6" ]]; then
+		provide net
 	fi
 	[ -n "$slaves" ] && need $slaves
 	netif_depend
