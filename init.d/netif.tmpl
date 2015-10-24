@@ -12,6 +12,9 @@ interface=${interface:-$INT}
 [ "$interface" = "tmpl" ] && exit 0
 
 if [ -z "$template" ]; then
+	if [ "$RC_SVCNAME" != "netif.tmpl" ]; then
+		eerror "Please specify a template (template=) for $RC_SVCNAME"
+	fi
 	exit 1
 fi
 
