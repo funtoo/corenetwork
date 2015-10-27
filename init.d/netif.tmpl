@@ -5,16 +5,16 @@
 # TODO - generate cached config for /etc/init.d/foo, use them for starting and stopping
 # rather than running "live" commands. This way "stop" will work correctly at all times.
 
-# next line: INT = deprecated, support it for backwards compat:
-INT=${RC_SVCNAME#net.}
-interface=${interface:-$INT}
+interface=${RC_SVCNAME#net.}
+if [ "$interface" == "${RC_SVCNAME}" ]; then
+	# if it doesn't begin with net., then look for netif.
+	interface=${RC_SVCNAME#netif.}
+fi
 
 [ "$interface" = "tmpl" ] && exit 0
 
 if [ -z "$template" ]; then
-	if [ "$RC_SVCNAME" != "netif.tmpl" ]; then
-		eerror "Please specify a template (template=) for $RC_SVCNAME"
-	fi
+	eerror "Please specify a template (template=) for $RC_SVCNAME"
 	exit 1
 fi
 
@@ -81,7 +81,7 @@ depend() {
 			need "${trunk}"
 		fi
 	fi
-	if [ -n "$gateway" ]] || [ -n "$gateway6" ]]; then
+	if [ -n "$gateway" ] || [ -n "$gateway6" ]; then
 		provide net
 	fi
 	[ -n "$slaves" ] && need $slaves
@@ -99,8 +99,8 @@ start() {
 		modprobe -q ipv6
 	fi
 	if [ "$vlanmode" != "off" ]; then
-	       	if [ ! -d /proc/net/vlan ]; then
-		       	modprobe -q 8021q
+		if [ ! -d /proc/net/vlan ]; then
+			modprobe -q 8021q
 			if [ ! -d /proc/net/vlan ]; then
 				eerror "VLAN for interface $interface could not be configured:"
 				die " \n802.1q support is not present in this kernel."
