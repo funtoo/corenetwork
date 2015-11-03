@@ -73,9 +73,18 @@ debug() {
 depend() {
 	need localmount
 	if [ "$vlanmode" != "off" ]; then
-		if [ "${trunk#netif.}" != "${trunk}" ]; then
-			#begins with netif
-			need "netif.${trunk}"
+		if [ "${trunk#net.}" == "${trunk}" ]; then
+			# trunk doesn't begin with "net.". Maybe be "netif." or just refer to bare interface, like "eth0".
+			# We want to inform users to start pointing trunk to "net.eth0", the full (and new-style) interface
+			# name.
+			ewarn "In /etc/conf.d/$RC_SVCNAME, please set trunk to point to net.${trunk} rather than just ${trunk}."
+			if [ -e /etc/init.d/netif.${trunk} ]; then
+				# For backwards compatibility, look for and recognize netif.${trunk}
+				need "netif.${trunk}"
+			else
+				# However, this is what we want people to migrate to...
+				need "net.${trunk}"
+			fi
 		else
 			# New-style scripts should have trunk point to the actual script name
 			need "${trunk}"
