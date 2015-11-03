@@ -222,7 +222,7 @@ get_interface_names() {
 
 get_trunk_int() {
 	if [ -e /etc/init.d/$1 ]; then
-		echo $(get_interface_name $1)
+		echo $(get_interface_names $1)
 	else
 		echo $1
 	fi
