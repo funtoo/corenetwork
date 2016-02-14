@@ -24,7 +24,6 @@ netif_pre_down() {
 		echo "There's no PID file for interface ${interface}. Aborting."
 		exit 3
 	fi
-
-	start-stop-daemon --stop --quiet --signal SIGHUP --pidfile "${PIDFILE}"
+	start-stop-daemon --stop --exec "${DHCPCD}" --pidfile "${PIDFILE}"
 }
 
