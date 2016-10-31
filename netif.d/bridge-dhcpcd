@@ -62,5 +62,5 @@ netif_pre_down() {
 		exit 3
 	fi
 
-	start-stop-daemon --stop --quiet --signal SIGHUP --pidfile "${PIDFILE}"
+       start-stop-daemon --stop --exec "${DHCPCD}" --pidfile "${PIDFILE}"
 }
