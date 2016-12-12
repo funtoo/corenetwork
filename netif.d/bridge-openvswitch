@@ -2,7 +2,6 @@
 
 netif_depend() {
         need ovsdb-server
-        need ovs-controller
         need ovs-vswitchd
 }
 
