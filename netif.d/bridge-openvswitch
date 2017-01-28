@@ -1,58 +1,63 @@
 #!/bin/sh -x
 
 netif_depend() {
-        need ovsdb-server
-        need ovs-vswitchd
+	need ovsdb-server
+	need ovs-vswitchd
 }
 
 netif_create() {
-        ovs-vsctl --may-exist  add-br $interface
+	vlanmode="script"
+	if [ "$trunk" != "$interface" -a "$vlan" != "$interface" ]; then
+		ovs-vsctl --may-exist  add-br $interface $(get_interface_names $trunk) $vlan
+	else
+		ovs-vsctl --may-exist  add-br $interface
+	fi
 }
 
 netif_destroy() {
-        ovs-vsctl --if-exists del-br $interface
+	ovs-vsctl --if-exists del-br $interface
 }
 
 netif_pre_down() {
-        local slave
+	local slave
 
-        if [ -n "$slaves" ]; then
-                for slave in $(get_interface_names $slaves); do
-                        ovs-ofctl mod-port $interface ${slave} down
-                        ovs-vsctl --if-exists del-port $interface ${slave}
-                done
-        fi
+	if [ -n "$slaves" ]; then
+		for slave in $(get_interface_names $slaves); do
+			ovs-ofctl mod-port $interface ${slave} down
+			ovs-vsctl --if-exists del-port $interface ${slave}
+		done
+	fi
 
-        ovs-ofctl mod-port $interface $interface down
+	ovs-ofctl mod-port $interface $interface down 2>/dev/null
 }
 
 netif_pre_up() {
-        local slave
-        local bcast
-        if [ -n "$slaves" ]; then
-                for slave in $(get_interface_names $slaves); do
-                        ovs-vsctl --may-exist add-port $interface ${slave}
-                        ovs-ofctl mod-port $interface ${slave} up
-                done
-        fi
+	local slave
+	local bcast
+	if [ -n "$slaves" ]; then
+		for slave in $(get_interface_names $slaves); do
+			ovs-vsctl --may-exist add-port $interface ${slave}
+			ovs-ofctl mod-port $interface ${slave} up
+		done
+	fi
 
-        for ipnm in $ipaddr $ipaddrs; do
-            if [ -n "$(if_ipv4 $ipnm)" ]; then
-                bcast="broadcast $(get_option "$ipnm" broadcast +)"
-            else
-                bcast=""
-            fi
+	for ipnm in $ipaddr $ipaddrs; do
+		if [ -n "$(if_ipv4 $ipnm)" ]; then
+			bcast="broadcast $(get_option "$ipnm" broadcast +)"
+		else
+			bcast=""
+		fi
 
-            ip addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
-        done
+		ip addr add $(get_ipnm_part "$ipnm") $bcast dev $interface || die "Couldn't add $ipnm to $interface"
+	done
 
-        if [ -n "$stp" ]; then
-            ovs-vsctl --if-exists set bridge $interface stp_enable=true
-        fi
+	if [ -n "$stp" ]; then
+		ovs-vsctl --if-exists set bridge $interface stp_enable=true
+	fi
 
-        if [ -n "$forwarding" ]; then
-            /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
-        fi
+	if [ -n "$forwarding" ]; then
+		/sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
+	fi
 
 }
 
