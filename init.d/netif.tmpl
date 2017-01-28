@@ -73,7 +73,7 @@ debug() {
 depend() {
 	need localmount
 	if [ "$vlanmode" != "off" ]; then
-		if [ "${trunk#netif.}" != "${trunk}" ]; then
+		if [ "${trunk#netif.}" = "${trunk}" ]; then
 			#begins with netif
 			need "netif.${trunk}"
 		else
@@ -98,7 +98,7 @@ start() {
 		# attempt to silently load ipv6 module
 		modprobe -q ipv6
 	fi
-	if [ "$vlanmode" != "off" ]; then
+	if [ "$vlanmode" != "off" -a "$vlanmode" != "script" ]; then #configure vlan only if not managed by netif_* script
 		if [ ! -d /proc/net/vlan ]; then
 			modprobe -q 8021q
 			if [ ! -d /proc/net/vlan ]; then
@@ -145,7 +145,7 @@ stop() {
 	ip addr flush dev $interface scope global
 	netif_post_down
 	# VLANS:
-	[ "${vlanmode}" != "off" ] && ip link delete ${interface}
+	[ "${vlanmode}" != "off" -a "$vlanmode" != "script" ] && ip link delete ${interface}
 	netif_destroy
 	eend 0
 }
@@ -310,7 +310,7 @@ ezrule() {
 	fi
 }
 
-if [ -z "$trunk" ]; then
+if [ -z "$trunk" -a -z "$vlanmode" ]; then
 	# auto-detect trunk/vlan ID from interface name
 	vlanmode="auto"
 	vlan="${interface##*.}"
@@ -318,7 +318,7 @@ if [ -z "$trunk" ]; then
 	[ "$vlan" = "$interface" ] && vlanmode="off"
 else
 	# trunk/vlan ID specified by user in config
-	vlanmode="custom"
+	: ${vlanmode:="custom"} #don't overwrite vlanmode if already specified
 	require vlan
 fi
 
