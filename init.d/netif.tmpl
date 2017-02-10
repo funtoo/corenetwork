@@ -20,7 +20,7 @@ fi
 
 CYAN="[36;01m"
 OFF="[0m"
-	
+
 DESC2="${template}"
 [ -n "$description" ] && DESC2="${description}"
 
@@ -73,12 +73,10 @@ debug() {
 depend() {
 	need localmount
 	if [ "$vlanmode" != "off" ]; then
-		if [ "${trunk#netif.}" != "${trunk}" ]; then
-			#begins with netif
-			need "netif.${trunk}"
+		if [ -e "/etc/init.d/netif.${trunk}" ]; then
+			need "netif.$trunk"
 		else
-			# New-style scripts should have trunk point to the actual script name
-			need "${trunk}"
+			need "$trunk"
 		fi
 	fi
 	if [ -n "$gateway" ] || [ -n "$gateway6" ]; then
