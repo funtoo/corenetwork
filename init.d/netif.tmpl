@@ -20,7 +20,7 @@ fi
 
 CYAN="[36;01m"
 OFF="[0m"
-	
+
 DESC2="${template}"
 [ -n "$description" ] && DESC2="${description}"
 
@@ -74,9 +74,9 @@ depend() {
 	need localmount
 	if [ "$vlanmode" != "off" ]; then
 		local initPath="/etc/init.d/"
-		if [ -f "${initPath}netif.${trunk}" ]; then # test for netif. prefix
+		if [ -e "${initPath}netif.${trunk}" ]; then # test for netif. prefix
 			need "netif.${trunk}"
-		elif [ -f "${initPath}net.${trunk}" ]; then # test for net. prefix
+		elif [ -e "${initPath}net.${trunk}" ]; then # test for net. prefix
 			need "net.${trunk}"
 		else
 			need "$trunk" # New-style scripts should have trunk point to the actual script name
