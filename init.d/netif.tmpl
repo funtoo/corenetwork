@@ -73,11 +73,14 @@ debug() {
 depend() {
 	need localmount
 	if [ "$vlanmode" != "off" ]; then
-		if [ -e "/etc/init.d/netif.${trunk}" ]; then
-			need "netif.$trunk"
+		local initPath="/etc/init.d/"
+		if [ -e "${initPath}netif.${trunk}" ]; then # test for netif. prefix
+			need "netif.${trunk}"
+		elif [ -e "${initPath}net.${trunk}" ]; then # test for net. prefix
+			need "net.${trunk}"
 		else
-			need "$trunk"
-		fi
+			need "$trunk" # New-style scripts should have trunk point to the actual script name
+		fi	
 	fi
 	if [ -n "$gateway" ] || [ -n "$gateway6" ]; then
 		provide net
