@@ -7,7 +7,7 @@
 # rather than running "live" commands. This way "stop" will work correctly at all times.
 
 interface=${RC_SVCNAME#net.}
-if [ "$interface" == "${RC_SVCNAME}" ]; then
+if [ "$interface" = "${RC_SVCNAME}" ]; then
     # if it doesn't begin with net., then look for netif.
     interface=${RC_SVCNAME#netif.}
 fi
