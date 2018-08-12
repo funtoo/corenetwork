@@ -5,63 +5,63 @@ pidfile="/var/run/hostapd/${interface}.pid"
 config="/etc/hostapd/${interface}.conf"
 command_args="-B -P${pidfile} ${config}"
 
-netif_depend () {
-	use logger
-	before dns dhcpcd net
+netif_depend() {
+    use logger
+    before dns dhcpcd net
 }
 
 netif_pre_up() {
-	if [ ! -f "${command}" ]; then
-	echo "hostapd binary not found. Did you emerge net-wireless/hostapd?"
-	exit 1
-	fi
+    if [ ! -f "${command}" ]; then
+        echo "hostapd binary not found. Did you emerge net-wireless/hostapd?"
+        exit 1
+    fi
 
-	if [ ! -f "${config}" ]; then
-	echo "There's no ${config} file for interface ${interface} in. Aborting."
-	exit 1
-	fi
+    if [ ! -f "${config}" ]; then
+        echo "There's no ${config} file for interface ${interface} in. Aborting."
+        exit 1
+    fi
 
-	local count=-1
-	local label
-	local bcast
-	for ipnm in $ipaddr $ipaddrs; do
-	if [ $count -ge 0 ]
-	then
-		label=$interface:$count
-	else
-		label=""
-	fi
-	if [ -n "$(if_ipv4 $ipnm)" ]
-	then
-		bcast="broadcast $(get_option "$ipnm" broadcast +)"
-	else
-		bcast=""
-	fi
-	if [ -z "$label" ]
-	then
-		ip addr add $(get_ipnm_part "$ipnm") $bcast \
-		   dev $interface || die "Couldn't add $ipnm to $interface"
-	else
-		ip addr add $(get_ipnm_part "$ipnm") $bcast \
-		   label $label dev $interface || die "Couldn't add $ipnm to $interface"
-	fi
-	count=$(( $count + 1 ))
-	done
+    local count=-1
+    local label
+    local bcast
+    for ipnm in $ipaddr $ipaddrs; do
+        if [ $count -ge 0 ]
+        then
+            label=$interface:$count
+        else
+            label=""
+        fi
+        if [ -n "$(if_ipv4 $ipnm)" ]
+        then
+            bcast="broadcast $(get_option "$ipnm" broadcast +)"
+        else
+            bcast=""
+        fi
+        if [ -z "$label" ]
+        then
+            ip addr add $(get_ipnm_part "$ipnm") $bcast \
+ dev $interface || die "Couldn't add $ipnm to $interface"
+        else
+            ip addr add $(get_ipnm_part "$ipnm") $bcast \
+ label $label dev $interface || die "Couldn't add $ipnm to $interface"
+        fi
+        count=$(($count + 1))
+    done
 }
 
-netif_post_up () {
-	if [ -f "${pidfile}" ]; then
-	echo "There's a PID file for interface $interface. Aborting."
-	exit 2
-	fi
+netif_post_up() {
+    if [ -f "${pidfile}" ]; then
+        echo "There's a PID file for interface $interface. Aborting."
+        exit 2
+    fi
 
-	$command $command_args
+    $command $command_args
 }
 
 netif_pre_down() {
-	if [ ! -f "${pidfile}" ]; then
-	echo "There's no PID file for interface ${interface}. Aborting."
-	exit 3
-	fi
-	start-stop-daemon --stop --exec "${command}" --pidfile "${pidfile}"
+    if [ ! -f "${pidfile}" ]; then
+        echo "There's no PID file for interface ${interface}. Aborting."
+        exit 3
+    fi
+    start-stop-daemon --stop --exec "${command}" --pidfile "${pidfile}"
 }

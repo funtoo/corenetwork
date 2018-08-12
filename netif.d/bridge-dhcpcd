@@ -4,63 +4,63 @@ DHCPCD="/sbin/dhcpcd"
 PIDFILE="/var/run/dhcpcd-${interface}.pid"
 
 netif_create() {
-	brctl addbr $interface
+    brctl addbr $interface
 }
 
 netif_destroy() {
-	brctl delbr $interface
+    brctl delbr $interface
 }
 
 netif_post_up() {
-	if [ -f "${PIDFILE}" ]; then
-		echo "There's a PID file for interface $interface. Aborting."
-		exit 2
-	fi
-	
-	$DHCPCD $interface
+    if [ -f "${PIDFILE}" ]; then
+        echo "There's a PID file for interface $interface. Aborting."
+        exit 2
+    fi
+
+    $DHCPCD $interface
 }
 
 netif_pre_up() {
-	if [ ! -f "${DHCPCD}" ]; then
-		echo "dhcpcd binary not found. Did you emerge net-misc/dhcpcd?"
-		exit 1
-	fi
-	
-	local slave
-	local bcast
-	if [ -n "$slaves" ]; then
-		for slave in $(get_interface_names $slaves); do
-			ifconfig ${slave} 0.0.0.0
-			brctl addif $interface ${slave}
-		done
-	fi
-	if [ -n "$(if_ipv4 $ipnm)" ]
-	then
-		bcast="broadcast $(get_option "$ipnm" broadcast +)"
-	else
-		bcast=""
-	fi
-	brctl setfd $interface 0
-	for ipnm in $ipaddr $ipaddrs; do
-		ip addr add $(get_ipnm_part "$ipnm") $bcast \
-		dev $interface || die "Couldn't add $ipnm to $interface"
-	done
+    if [ ! -f "${DHCPCD}" ]; then
+        echo "dhcpcd binary not found. Did you emerge net-misc/dhcpcd?"
+        exit 1
+    fi
 
-	if [ -n "$stp" ]; then
-                brctl stp $interface $stp
-        fi
+    local slave
+    local bcast
+    if [ -n "$slaves" ]; then
+        for slave in $(get_interface_names $slaves); do
+            ifconfig ${slave} 0.0.0.0
+            brctl addif $interface ${slave}
+        done
+    fi
+    if [ -n "$(if_ipv4 $ipnm)" ]
+    then
+        bcast="broadcast $(get_option "$ipnm" broadcast +)"
+    else
+        bcast=""
+    fi
+    brctl setfd $interface 0
+    for ipnm in $ipaddr $ipaddrs; do
+        ip addr add $(get_ipnm_part "$ipnm") $bcast \
+ dev $interface || die "Couldn't add $ipnm to $interface"
+    done
 
-	if [ -n "$forwarding" ]; then
-                /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} >/dev/null 2>&1
-        fi
+    if [ -n "$stp" ]; then
+        brctl stp $interface $stp
+    fi
+
+    if [ -n "$forwarding" ]; then
+        /sbin/sysctl net.ipv4.conf.${interface}.forwarding=${forwarding} > /dev/null 2>&1
+    fi
 }
 
 
 netif_pre_down() {
-	if [ ! -f "${PIDFILE}" ]; then
-		echo "There's no PID file for interface ${interface}. Aborting."
-		exit 3
-	fi
+    if [ ! -f "${PIDFILE}" ]; then
+        echo "There's no PID file for interface ${interface}. Aborting."
+        exit 3
+    fi
 
-       start-stop-daemon --stop --exec "${DHCPCD}" --pidfile "${PIDFILE}"
+    start-stop-daemon --stop --exec "${DHCPCD}" --pidfile "${PIDFILE}"
 }

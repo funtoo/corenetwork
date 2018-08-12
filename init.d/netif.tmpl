@@ -1,5 +1,6 @@
-#!/sbin/runscript
-# Copyright (c) 2007-2015 Funtoo Technologies
+#!/sbin/openrc-run
+
+# Copyright (c) 2007-2018 Funtoo Solutions, Inc.
 # All rights reserved. Released under the 2-clause BSD license.
 
 # TODO - generate cached config for /etc/init.d/foo, use them for starting and stopping
@@ -7,15 +8,15 @@
 
 interface=${RC_SVCNAME#net.}
 if [ "$interface" == "${RC_SVCNAME}" ]; then
-	# if it doesn't begin with net., then look for netif.
-	interface=${RC_SVCNAME#netif.}
+    # if it doesn't begin with net., then look for netif.
+    interface=${RC_SVCNAME#netif.}
 fi
 
 [ "$interface" = "tmpl" ] && exit 0
 
 if [ -z "$template" ]; then
-	eerror "Please specify a template (template=) for $RC_SVCNAME"
-	exit 1
+    eerror "Please specify a template (template=) for $RC_SVCNAME"
+    exit 1
 fi
 
 CYAN="[36;01m"
@@ -28,130 +29,146 @@ STARTD="Network $DESC2 $CYAN$interface$OFF up"
 STOPD="Network $DESC2 $CYAN$interface$OFF down"
 
 require() {
-	local missing=""
-	for envname in $*; do 
-		[ -z "${!envname}" ] && missing="$missing $envname"
-	done
-	if [ -n "$missing" ]; then
-		echo
-		eerror "ERROR: Required configuration variable(s) are missing:"
-		eerror ""
-		for miss in $missing; do
-			eerror "    ${CYAN}$miss${OFF}"
-		done
-		eerror ""
-		eerror "Please correct your configuration to address this issue."
-		echo
-		exit 1
-	fi
+    local missing=""
+    for envname in $*; do
+        [ -z "${!envname}" ] && missing="$missing $envname"
+    done
+    if [ -n "$missing" ]; then
+        echo
+        eerror "ERROR: Required configuration variable(s) are missing:"
+        eerror ""
+        for miss in $missing; do
+            eerror "    ${CYAN}$miss${OFF}"
+        done
+        eerror ""
+        eerror "Please correct your configuration to address this issue."
+        echo
+        exit 1
+    fi
 }
 
-die() { eend 1 "$*"; exit 1; }
+die() { eend 1 "$*";
+    exit 1; }
+
 netif_depend() { return; }
+
 netif_create() { return; }
+
 netif_pre_up() { return; }
+
 netif_post_up() { return; }
+
 netif_pre_down() { return; }
+
 netif_post_down() { return; }
+
 netif_destroy() { return; }
 
 try() {
-	$* 
-	if [ $? -ne 0 ]; then
-		echo "Command failure: $*"
-		exit 1
-	fi
+    $*
+    if [ $? -ne 0 ]; then
+        echo "Command failure: $*"
+        exit 1
+    fi
 }
 
 debug() {
-	$* 
-	if [ $? -ne 0 ]; then
-		echo "Command failure: $*"
-	fi
+    $*
+    if [ $? -ne 0 ]; then
+        echo "Command failure: $*"
+    fi
 }
 
 depend() {
-	need localmount
-	if [ "$vlanmode" != "off" ]; then
-		if [ -e "/etc/init.d/netif.${trunk}" ]; then
-			need "netif.$trunk"
-		else
-			need "$trunk"
-		fi
-	fi
-	if [ -n "$gateway" ] || [ -n "$gateway6" ]; then
-		provide net
-	fi
-	[ -n "$slaves" ] && need $slaves
-	netif_depend
+    need localmount
+    before net-online
+    if [ "$vlanmode" != "off" ]; then
+        if [ -e "/etc/init.d/netif.${trunk}" ]; then
+            need "netif.$trunk"
+        else
+            need "$trunk"
+        fi
+    fi
+    if [ -n "$gateway" ] || [ -n "$gateway6" ]; then
+        provide net
+    fi
+    [ -n "$slaves" ] && need $slaves
+    netif_depend
 }
 
 start() {
-	ebegin "$STARTD"
-	netif_create
-	if [ "$macaddr" != "" ]; then
-		/sbin/nameif ${interface} ${macaddr} || die "Couldn't rename interface"
-	fi
-	if [ ! -d /proc/sys/net/ipv6 ]; then
-		# attempt to silently load ipv6 module
-		modprobe -q ipv6
-	fi
-	if [ "$vlanmode" != "off" -a "$vlanmode" != "script" ]; then #configure vlan only if not managed by netif_* script
-		if [ ! -d /proc/net/vlan ]; then
-			modprobe -q 8021q
-			if [ ! -d /proc/net/vlan ]; then
-				eerror "VLAN for interface $interface could not be configured:"
-				die " \n802.1q support is not present in this kernel."
-			fi
-		fi
-		require trunk vlan
-		trunk_int="$(get_trunk_int ${trunk})"
-		ip link add name ${interface} link ${trunk_int} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
-	fi
-	ip addr flush dev $interface scope global > /dev/null 2>&1
-	netif_pre_up
-	if [ -n "$mac_replace" ]; then
-		ip link set dev $interface address $mac_replace || die "Couldn't set MAC to $mac_replace."
-	fi
-	debug ip link set $interface up
-	if [ -n "$mtu" ]; then
-		ip link set $interface mtu $mtu
-		if [ -n "$slaves" ]; then
-			for slave in ${slaves//net./}; do
-				ip link set $slave mtu $mtu || eend $?
-			done
-		fi
-	fi
-	ezroute 4 add; ezroute 6 add; ezresolv add
-	ezrule 4 add; ezrule 6 add
-	if [ "$multicast" = "yes" ]
-	then
-		ebegin "Adding multicast route for $interface"	
-		route add -net 224.0.0.0 netmask 240.0.0.0 dev $interface
-		eend $?
-	fi
-	netif_post_up
-	eend $?
+    ebegin "$STARTD"
+    netif_create
+    if [ "$macaddr" != "" ]; then
+        /sbin/nameif ${interface} ${macaddr} || die "Couldn't rename interface"
+    fi
+    if [ ! -d /proc/sys/net/ipv6 ]; then
+        # attempt to silently load ipv6 module
+        modprobe -q ipv6
+    fi
+    if [ "$vlanmode" != "off" -a "$vlanmode" != "script" ]; then
+    #configure vlan only if not managed by netif_* script
+        if [ ! -d /proc/net/vlan ]; then
+            modprobe -q 8021q
+            if [ ! -d /proc/net/vlan ]; then
+                eerror "VLAN for interface $interface could not be configured:"
+                die " \n802.1q support is not present in this kernel."
+            fi
+        fi
+        require trunk vlan
+        trunk_int="$(get_trunk_int ${trunk})"
+        ip link add name ${interface} link ${trunk_int} type vlan id ${vlan} || die "Couldn't configure VLAN ${vlan} on ${trunk}"
+    fi
+    ip addr flush dev $interface scope global > /dev/null 2>&1
+    netif_pre_up
+    if [ -n "$mac_replace" ]; then
+        ip link set dev $interface address $mac_replace || die "Couldn't set MAC to $mac_replace."
+    fi
+    debug ip link set $interface up
+    if [ -n "$mtu" ]; then
+        ip link set $interface mtu $mtu
+        if [ -n "$slaves" ]; then
+            for slave in ${slaves//net./}; do
+                ip link set $slave mtu $mtu || eend $?
+            done
+        fi
+    fi
+    ezroute 4 add;
+    ezroute 6 add;
+    ezresolv add
+    ezrule 4 add;
+    ezrule 6 add
+    if [ "$multicast" = "yes" ]
+    then
+        ebegin "Adding multicast route for $interface"
+        route add -net 224.0.0.0 netmask 240.0.0.0 dev $interface
+        eend $?
+    fi
+    netif_post_up
+    eend $?
 }
 
 stop() {
-	ebegin "$STOPD"
-	netif_pre_down
-	ezrule 6 del; ezrule 4 del
-	ezresolv del; ezroute 6 del; ezroute 4 del
-	ip link set $interface down
-	ip addr flush dev $interface scope global
-	netif_post_down
-	# VLANS:
-	[ "${vlanmode}" != "off" -a "$vlanmode" != "script" ] && ip link delete ${interface}
-	netif_destroy
-	eend 0
+    ebegin "$STOPD"
+    netif_pre_down
+    ezrule 6 del;
+    ezrule 4 del
+    ezresolv del;
+    ezroute 6 del;
+    ezroute 4 del
+    ip link set $interface down
+    ip addr flush dev $interface scope global
+    netif_post_down
+    # VLANS:
+    [ "${vlanmode}" != "off" -a "$vlanmode" != "script" ] && ip link delete ${interface}
+    netif_destroy
+    eend 0
 }
 
 # DOM, IP, NM, SLAVES, MTU, NS1, NS2, GW are deprecated - this is backwards compat. code:
 domain=${domain:-$DOM}
 if [ -n "$IP" ]; then
-	ipaddr=$IP/$NM
+    ipaddr=$IP/$NM
 fi
 netmask=${netmask:-$NM}
 slaves=${slaves:-$SLAVES}
@@ -160,15 +177,17 @@ nameservers="${nameservers:-$NS1 $NS2}"
 gateway=${gateway:-$GW}
 # COMPAT END
 
-get_ipnm_part() {
-	echo "${1%%;*}"
+get_ipnm_part()
+
+{
+echo " $ { 1 % %; * } "
 }
 
 # if_ipv4 will accept something like 1.2.3.4/24;broadcast=1.2.3.255 and return a non-null string
 # if the address appears to be an ipv4 address.
 
 if_ipv4() {
-	echo "${1%%/*}" | awk '/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/ {print $1}'
+    echo "${1%%/*}" | awk '/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/ {print $1}'
 }
 
 # we encode the broadcast like this: 1.2.3.4/24;broadcast=1.2.3.255;foo=bar;x;y;z
@@ -178,39 +197,41 @@ if_ipv4() {
 # 'get_option "1.2.3.4;a;b;c" a false' will return 'true' if "a" is defined as a keyword, and "false" (default value)
 # otherwise.
 
-get_option() {
-	local full="$1"
-	local ipnm="$(get_ipnm_part $full)"
-	local oldparts="${full:${#ipnm}}"
-	local trim
-	while true; do
-		[ "${oldparts:$((${#oldparts}-1))}" = ";" ] && oldparts="${oldparts:0:$((${#oldparts}-1))}" && continue
-		count=$(($count + 1))
-		thispart="${oldparts##*;}"
-		varname="${thispart%%=*}"
-		if [ "$varname" = "$thispart" ] && [ "$thispart" = "$2" ]; then
-			echo "true"
-			return
-		fi
-		if [ "$varname" != "$thispart" ] && [ "$varname" = "$2" ]; then
-			echo "${thispart#*=}"
-			return
-		fi
-		[ -z "$thispart" ] && break
-		trim=$(( ${#oldparts} - ${#thispart} ))
-		oldparts="${oldparts:0:${trim}}"
-		[ -z "${oldparts}" ] && break
-	done
-	# return default (if any)
-	echo "$3"
+get_option()
+
+{
+local full="$1"
+local ipnm="$(get_ipnm_part $full)"
+local oldparts="${full:${#ipnm}}"
+local trim
+while true; do
+[ "${oldparts:$((${#oldparts}-1))}" = ";" ] && oldparts="${oldparts:0:$((${#oldparts}-1))}" && continue
+count=$(($count + 1))
+thispart=" $ { oldparts ## *; } "
+varname="${thispart%%=*}"
+if [ "$varname" = "$thispart" ] && [ "$thispart" = "$2" ]; then
+    echo "true"
+    return
+fi
+if [ "$varname" != "$thispart" ] && [ "$varname" = "$2" ]; then
+    echo "${thispart#*=}"
+    return
+fi
+[ -z "$thispart" ] && break
+trim=$((${#oldparts} - ${#thispart}))
+oldparts="${oldparts:0:${trim}}"
+[ -z "${oldparts}" ] && break
+done
+# return default (if any)
+echo "$3"
 }
 
 # This removes the leading part of the network script, up to and including the first '.', to grab the interface name
 
 get_interface_names() {
-	for ifn in $*; do
-		echo ${ifn#*.}
-	done
+    for ifn in $*; do
+        echo ${ifn#*.}
+    done
 }
 
 # We are migrating from having trunk=eth0 to trunk=net.eth0. This following function is used to implement backwards
@@ -219,105 +240,111 @@ get_interface_names() {
 # use it as-is.
 
 get_trunk_int() {
-	if [ -e /etc/init.d/$1 ]; then
-		echo $(get_interface_names $1)
-	else
-		echo $1
-	fi
+    if [ -e /etc/init.d/$1 ]; then
+        echo $(get_interface_names $1)
+    else
+        echo $1
+    fi
 }
 
 start_pre() {
-	if [ -n "$ipaddr $ipaddrs" ]; then
-		for i in $ipaddr $ipaddrs; do
-			if [ "${i##*/}" = "$i" ]; then
-				echo
-				ewarn "You probably want to add a netmask to the ipaddr $i defined in your configuration."
-				ewarn "Example: ipaddr=\"192.168.0.1/24\""
-				echo
-			fi
-		done
-	fi
+    if [ -n "$ipaddr $ipaddrs" ]; then
+        for i in $ipaddr $ipaddrs; do
+            if [ "${i##*/}" = "$i" ]; then
+                echo
+                ewarn "You probably want to add a netmask to the ipaddr $i defined in your configuration."
+                ewarn "Example: ipaddr=\"192.168.0.1/24\""
+                echo
+            fi
+        done
+    fi
 }
 
 ezdns() {
-	# This function generates a resolv.conf file, which ezresolv() passes to resolvconf
-	[ -n "$domain" ] && echo "domain $domain"
-	[ -n "$search" ] && echo "search $search"
-	for ns in $nameservers; do
-		echo "nameserver $ns"
-	done
+    # This function generates a resolv.conf file, which ezresolv() passes to resolvconf
+    [ -n "$domain" ] && echo "domain $domain"
+    [ -n "$search" ] && echo "search $search"
+    for ns in $nameservers; do
+        echo "nameserver $ns"
+    done
 }
 
 ezresolv() {
-	# This function calls resolvconf (openresolv) with the correct resolv.conf passed as a here-file
-	if [ "$1" = "add" ]; then
-		[ -z "`ezdns`" ] && return
-		resolvconf -a $interface << EOF || die "Problem adding DNS info for $interface"
+    # This function calls resolvconf (openresolv) with the correct resolv.conf passed as a here-file
+    if [ "$1" = "add" ]; then
+        [ -z "`ezdns`" ] && return
+        resolvconf -a $interface << EOF || die "Problem adding DNS info for $interface"
 `ezdns`
 EOF
-	else
-		resolvconf -d $interface > /dev/null 2>&1
-	fi
+    else
+        resolvconf -d $interface > /dev/null 2>&1
+    fi
 }
 
-ezroute() {
-	# This function processes a semi-colon delimited list of routes set in $route, and also
-	# supports the $gateway variable for setting a default IP route. 
-	local rest
-	if [ "$1" = "4" ]; then
-		rest="$route"
-		[ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
-	elif [ "$1" = "6" ]; then
-		rest="$route6"
-		[ -n "$gateway6" ] && rest="$rest; default via $gateway6 dev $interface"
-	fi
-	if [ -n "$rest" ]; then
-		# must end in a semi-colon before we start processing:
-		rest="$rest;"
-		while [ "$rest" != "" ]
-		do
-			# first = current route command; rest = remainder
-			first="${rest%%;*}"
-			rest="${rest#*;}"
-			# trim any trailing or leading spaces:
-			first=${first%% }; first=${first## }
-			[ "$first" != "" ] && ip -$1 route $2 $first
-			[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
-		done
-	fi
+ezroute()
+
+{
+# This function processes a semi-colon delimited list of routes set in $route, and also
+# supports the $gateway variable for setting a default IP route.
+local rest
+if [ "$1" = "4" ]; then
+    rest="$route"
+    [ -n "$gateway" ] && rest="$rest; default via $gateway dev $interface"
+elif [ "$1" = "6" ]; then
+    rest="$route6"
+    [ -n "$gateway6" ] && rest="$rest; default via $gateway6 dev $interface"
+fi
+if [  -n " $rest " ]; then
+# must end in a semi-colon before we start processing:
+rest="$rest;"
+while [ "$rest" != "" ]
+do
+# first = current route command; rest = remainder
+first=" $ { rest % %; * } "
+rest=" $ { rest # *; } "
+# trim any trailing or leading spaces:
+first=${first%%};
+first=${first##}
+[ "$first" != "" ] && ip -$1 route $2 $first
+[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set route: $first"
+done
+fi
 }
 
-ezrule() {
-	# This function processes a semi-colon delimited list of rules set in $rule
-	local rest
-	if [ "$1" = "4" ]; then
-		rest="$rule"
-	elif [ "$1" = "6" ]; then
-		rest="$rule6"
-	fi
-	if [ -n "$rest" ]; then
-		# ensure a terminating semi-colon
-		rest="$rest;"
-		while [ "$rest" != "" ]; do
-			first="${rest%%;*}"
-			rest="${rest#*;}"
-			first=${first%% }; first=${first## }
-			[ "$first" != "" ] && ip -$1 rule $2 $first
-			[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set rule: $first"
-		done
-	fi
+ezrule()
+
+{
+# This function processes a semi-colon delimited list of rules set in $rule
+local rest
+if [ "$1" = "4" ]; then
+    rest="$rule"
+elif [ "$1" = "6" ]; then
+    rest="$rule6"
+fi
+if [  -n " $rest " ]; then
+# ensure a terminating semi-colon
+rest="$rest;"
+while [ "$rest" != "" ]; do
+first=" $ { rest % %; * } "
+rest=" $ { rest # *; } "
+first=${first%%};
+first=${first##}
+[ "$first" != "" ] && ip -$1 rule $2 $first
+[ "$2" = "add" ] && [ $? -ne 0 ] && die "Couldn't set rule: $first"
+done
+fi
 }
 
 if [ -z "$trunk" -a -z "$vlanmode" ]; then
-	# auto-detect trunk/vlan ID from interface name
-	vlanmode="auto"
-	vlan="${interface##*.}"
-	trunk="${interface%.*}"
-	[ "$vlan" = "$interface" ] && vlanmode="off"
+    # auto-detect trunk/vlan ID from interface name
+    vlanmode="auto"
+    vlan="${interface##*.}"
+    trunk="${interface%.*}"
+    [ "$vlan" = "$interface" ] && vlanmode="off"
 else
-	# trunk/vlan ID specified by user in config
-	: ${vlanmode:="custom"} #don't overwrite vlanmode if already specified
-	require vlan
+    # trunk/vlan ID specified by user in config
+    : ${vlanmode:="custom"} #don't overwrite vlanmode if already specified
+    require vlan
 fi
 
 . /etc/netif.d/$template

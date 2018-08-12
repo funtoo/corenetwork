@@ -1,23 +1,24 @@
-#!/sbin/runscript
-# Copyright 2010 Funtoo Technologies
+#!/sbin/openrc-run
+
+# Copyright 2010-2018 Funtoo Solutions, Inc.
 # All rights reserved. Released under the 2-clause BSD license.
 
 depend() {
-	provide net
+    provide net
 }
 
 start() {
-        ebegin "Bringing up network interface lo"
-	ip addr add 127.0.0.1/8 dev lo brd + scope host
-	ip route add 127.0.0.0/8 dev lo scope host
-	ip link set lo up
-        eend $?
+    ebegin "Bringing up network interface lo"
+    ip addr add 127.0.0.1/8 dev lo brd + scope host
+    ip route add 127.0.0.0/8 dev lo scope host
+    ip link set lo up
+    eend $?
 }
 
 stop() {
-        ebegin "Shutting down network interface lo"
-	ip route del 127.0.0.0/8 dev lo scope host
-	ip addr del 127.0.0.1/8 dev lo
-        ip link set lo down
-        eend $?
+    ebegin "Shutting down network interface lo"
+    ip route del 127.0.0.0/8 dev lo scope host
+    ip addr del 127.0.0.1/8 dev lo
+    ip link set lo down
+    eend $?
 }

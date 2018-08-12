@@ -1,7 +1,7 @@
 #!/bin/sh
 
 netif_pre_up() {
-	# needed? :
-	ip addr add 0.0.0.0 dev $interface
+    # needed? :
+    ip addr add 0.0.0.0 dev $interface
 }
 
