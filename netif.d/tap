@@ -1,6 +1,9 @@
 #!/bin/sh
 
 netif_create() {
+	# TUN/TAP module need loaded before creation
+	modprobe -q tun
+
     if [ -n "$user" ]; then
         ip tuntap add dev $interface mode tap user $user
     elif [ -n "$group" ]; then
