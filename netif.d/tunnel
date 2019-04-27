@@ -1,0 +1,24 @@
+#!/bin/sh
+
+netif_pre_up() {
+	require mode local remote
+	try ip tunnel add $interface mode $mode remote $remote local $local ttl 255
+	try ip addr add $ipaddr dev $interface
+}
+
+netif_post_up() {
+	if [ $mode = "sit" ]; then
+		try ip route add ::/0 dev $interface
+	fi
+}
+
+netif_pre_down() {
+	if [ $mode = "sit" ]; then
+		ip route del ::/0 dev $interface
+	fi
+}
+
+netif_post_down() {
+	ip tunnel del $interface
+}
+
