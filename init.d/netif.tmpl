@@ -84,6 +84,7 @@ depend() {
 		provide net
 	fi
 	[ -n "$slaves" ] && need $slaves
+	[ -n "$bridge" ] && need $bridge
 	netif_depend
 }
 
@@ -122,6 +123,10 @@ start() {
 				ip link set $slave mtu $mtu || eend $?
 			done
 		fi
+	fi
+	if [ -n "$bridge" ]; then
+		ip link set dev $interface mtu $(ip link show dev $(get_interface_names $bridge) | sed -re 's/^.*mtu ([0-9]+).*$/\1/; q')
+		brctl addif $(get_interface_names $bridge) $interface || die "brctl addif error"
 	fi
 	ezroute 4 add; ezroute 6 add; ezresolv add
 	ezrule 4 add; ezrule 6 add

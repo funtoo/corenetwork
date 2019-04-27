@@ -1,0 +1,15 @@
+#!/bin/sh
+
+netif_depend() {
+		require base
+        need $base
+}
+
+netif_create() {
+		require mode
+        ip link add name $interface link $(get_interface_names $base) type macvlan mode $mode
+}
+
+netif_destroy() {
+        ip link del dev $interface
+}
