@@ -61,7 +61,10 @@ netif_post_up() {
         command_args="${command_args} -D$driver"
     fi
 
-    $command $command_args
+    if [ ! -e ${pidfile%/*} ]; then
+        mkdir ${pidfile%/*} || exit 1
+    fi
+    $command $command_args || die "Couldn't start wpa_supplicant"
 }
 
 netif_pre_down() {
