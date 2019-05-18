@@ -26,6 +26,10 @@ DESC2="${template}"
 
 STARTD="Network $DESC2 $CYAN$interface$OFF up"
 STOPD="Network $DESC2 $CYAN$interface$OFF down"
+if [ "$dhcp" = "yes" ]; then
+	DHCPC=${DHCPC:-"/sbin/dhcpcd"}
+	DHCPC_PIDFILE="/var/run/dhcpcd-${interface}.pid"
+fi
 
 require() {
 	local missing=""
@@ -128,6 +132,7 @@ start() {
 		ip link set dev $interface mtu $(ip link show dev $(get_interface_names $bridge) | sed -re 's/^.*mtu ([0-9]+).*$/\1/; q')
 		brctl addif $(get_interface_names $bridge) $interface || die "brctl addif error"
 	fi
+	ezdhcp start
 	ezroute 4 add; ezroute 6 add; ezresolv add
 	ezrule 4 add; ezrule 6 add
 	if [ "$multicast" = "yes" ]
@@ -145,6 +150,7 @@ stop() {
 	netif_pre_down
 	ezrule 6 del; ezrule 4 del
 	ezresolv del; ezroute 6 del; ezroute 4 del
+	ezdhcp stop
 	ip link set $interface down
 	ip addr flush dev $interface scope global
 	netif_post_down
@@ -242,6 +248,23 @@ start_pre() {
 				echo
 			fi
 		done
+	fi
+}
+
+ezdhcp() {
+	if [ "$dhcp" != "yes" ]; then
+		return
+	fi
+	if [ "$1" = "start" ]; then
+		if [ -f "${DHCPC_PIDFILE}" ]; then
+			die "There's a PID file for interface $interface. Aborting."
+		fi
+		$DHCPC $interface
+	else
+		if [ ! -f "${DHCPC_PIDFILE}" ]; then
+			die "There's no PID file for interface ${interface}. Aborting."
+		fi
+		start-stop-daemon --stop --exec "${DHCPC}" --pidfile "${DHCPC_PIDFILE}"
 	fi
 }
 

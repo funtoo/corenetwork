@@ -2,7 +2,14 @@
 
 command="/usr/sbin/wpa_supplicant"
 pidfile="/var/run/wpa_supplicant/${interface}.pid"
-config="/etc/wpa_supplicant/${interface}.conf"
+# for CONFIG to work, rc_env_allow in /etc/rc.conf must contain CONFIG in value
+if [ -n "${CONFIG}" ]; then
+    config="/etc/wpa_supplicant/${CONFIG}"
+elif [ -n "${config}" ]; then
+    config="/etc/wpa_supplicant/${config}"
+else
+    config="/etc/wpa_supplicant/${interface}.conf"
+fi
 command_args="-s -B -i${interface} -P${pidfile} -c${config}"
 
 netif_depend() {
@@ -61,7 +68,10 @@ netif_post_up() {
         command_args="${command_args} -D$driver"
     fi
 
-    $command $command_args
+    if [ ! -e ${pidfile%/*} ]; then
+        mkdir ${pidfile%/*} || exit 1
+    fi
+    $command $command_args || die "Couldn't start wpa_supplicant"
 }
 
 netif_pre_down() {
