@@ -263,7 +263,7 @@ ezdhcp() {
 		if [ -f "${DHCPC_PIDFILE}" ]; then
 			die "There's a PID file for interface $interface. Aborting."
 		fi
-		$DHCPC $interface
+		$DHCPC -b -t0 $interface
 	else
 		if [ ! -f "${DHCPC_PIDFILE}" ]; then
 			die "There's no PID file for interface ${interface}. Aborting."
