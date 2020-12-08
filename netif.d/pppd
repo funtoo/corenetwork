@@ -1,0 +1,15 @@
+#!/bin/sh
+
+netif_create() {
+	if [ ! -f "/usr/sbin/pppd" ]; then
+		echo "pppd binary not found. Did you emerge net-dialup/ppp?"
+		exit 1
+	fi
+
+	pppd call $peer ifname $interface linkname $interface
+}
+
+netif_destroy() {
+	PID=`head -n1 /var/run/ppp-$interface.pid`
+	kill $PID
+}
