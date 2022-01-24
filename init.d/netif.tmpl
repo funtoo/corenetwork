@@ -87,7 +87,7 @@ depend() {
 	if [ -n "$gateway" ] || [ -n "$gateway6" ]; then
 		provide net
 	fi
-	[ -n "$slaves" ] && need $slaves
+	[ -n "$slaves" ] && need $(filter_interface_names $slaves)
 	[ -n "$bridge" ] && need $bridge
 	netif_depend
 }
@@ -260,6 +260,15 @@ get_interface_names() {
 		echo ${ifn#netif.}
 	done
 }
+
+# This removes any non-netif interface names from a list:
+
+filter_interface_names() {
+	for ifn in $*; do
+		[ "${ifn#netif.}" != "${ifn}" ] && echo "$ifn"
+	done
+}
+
 
 # We are migrating from having trunk=eth0 to trunk=net.eth0. This following function is used to implement backwards
 # compatibility. If we see $trunk existing in /etc/init.d, then we assume it has a net. or netif. prefix we need to
