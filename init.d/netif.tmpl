@@ -1,15 +1,11 @@
 #!/sbin/openrc-run
-# Copyright (c) 2007-2018 Funtoo Solutions, Inc.
+# Copyright (c) 2007-2022 Funtoo Solutions, Inc.
 # All rights reserved. Released under the 2-clause BSD license.
 
 # TODO - generate cached config for /etc/init.d/foo, use them for starting and stopping
 # rather than running "live" commands. This way "stop" will work correctly at all times.
 
-interface=${RC_SVCNAME#net.}
-if [ "$interface" == "${RC_SVCNAME}" ]; then
-	# if it doesn't begin with net., then look for netif.
-	interface=${RC_SVCNAME#netif.}
-fi
+interface=${RC_SVCNAME#netif.}
 
 [ "$interface" = "tmpl" ] && exit 0
 
@@ -149,7 +145,7 @@ start() {
 	if [ -n "$mtu" ]; then
 		ip link set $interface mtu $mtu
 		if [ -n "$slaves" ]; then
-			for slave in ${slaves//net./}; do
+			for slave in ${slaves//netif./}; do
 				ip link set $slave mtu $mtu || eend $?
 			done
 		fi
@@ -261,7 +257,7 @@ get_option() {
 
 get_interface_names() {
 	for ifn in $*; do
-		echo ${ifn#*.}
+		echo ${ifn#netif.}
 	done
 }
 
