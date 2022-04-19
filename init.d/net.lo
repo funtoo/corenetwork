@@ -1,6 +1,6 @@
 #!/sbin/openrc-run
 
-# Copyright 2010-2018 Funtoo Solutions, Inc.
+# Copyright 2010-2022 Funtoo Solutions, Inc.
 # All rights reserved. Released under the 2-clause BSD license.
 
 depend() {
