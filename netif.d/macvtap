@@ -1,30 +1,30 @@
 #!/bin/sh
 
 netif_depend() {
-        if [ -z $base ]; then
-                echo "base interface(base=) not supplied"
-        exit 1
-        fi
-        need $base
+		if [ -z $base ]; then
+						echo "base interface(base=) not supplied"
+		exit 1
+		fi
+		need $base
 }
 
 netif_create() {
-        # TUN/TAP module need loaded before creation
-        modprobe -q macvtap
-        perms=""
+		# TUN/TAP module need loaded before creation
+		modprobe -q macvtap
+		perms=""
 
-        if [ -n "$user" ]; then
-                perms="$user"
-        fi
-        if [ -n "$group" ]; then
-                perms="$perms:$group"
-        fi
-        ip link add name $interface link $(get_interface_names $base) type macvtap mode $mode
-        if [ -n "$perms" ]; then
-                chown $perms /dev/tap$(cat /sys/class/net/$interface/ifindex)
-        fi
+		if [ -n "$user" ]; then
+						perms="$user"
+		fi
+		if [ -n "$group" ]; then
+						perms="$perms:$group"
+		fi
+		ip link add name $interface link $(get_interface_names $base) type macvtap mode $mode
+		if [ -n "$perms" ]; then
+						chown $perms /dev/tap$(cat /sys/class/net/$interface/ifindex)
+		fi
 }
 
 netif_destroy() {
-        ip link del dev $interface
+		ip link del dev $interface
 }

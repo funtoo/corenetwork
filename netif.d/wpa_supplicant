@@ -1,7 +1,8 @@
 #!/bin/sh
 
-command="/usr/sbin/wpa_supplicant"
+binary="/usr/sbin/wpa_supplicant"
 pidfile="/var/run/wpa_supplicant/${interface}.pid"
+
 # for CONFIG to work, rc_env_allow in /etc/rc.conf must contain CONFIG in value
 if [ -n "${CONFIG}" ]; then
     config="/etc/wpa_supplicant/${CONFIG}"
@@ -10,7 +11,7 @@ elif [ -n "${config}" ]; then
 else
     config="/etc/wpa_supplicant/${interface}.conf"
 fi
-command_args="-s -B -i${interface} -P${pidfile} -c${config}"
+binary_args="-s -B -i${interface} -P${pidfile} -c${config}"
 
 netif_depend() {
     need localmount
@@ -20,7 +21,7 @@ netif_depend() {
 }
 
 netif_pre_up() {
-    if [ ! -f "${command}" ]; then
+    if [ ! -f "${binary}" ]; then
         echo "wpa_supplicant binary not found. Did you emerge net-wireless/wpa_supplicant?"
         exit 1
     fi
@@ -65,13 +66,13 @@ netif_post_up() {
     fi
 
     if [ -n "$driver" ]; then
-        command_args="${command_args} -D$driver"
+        binary_args="${binary_args} -D$driver"
     fi
 
     if [ ! -e ${pidfile%/*} ]; then
         mkdir ${pidfile%/*} || exit 1
     fi
-    $command $command_args || die "Couldn't start wpa_supplicant"
+    $binary $binary_args || die "Couldn't start wpa_supplicant"
 }
 
 netif_pre_down() {
@@ -79,5 +80,5 @@ netif_pre_down() {
         echo "There's no PID file for interface ${interface}. Aborting."
         exit 3
     fi
-    start-stop-daemon --stop --exec "${command}" --pidfile "${pidfile}"
+    start-stop-daemon --stop --exec "${binary}" --pidfile "${pidfile}"
 }

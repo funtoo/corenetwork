@@ -3,20 +3,20 @@
 WG_QUICK="/usr/bin/wg-quick"
 
 start() {
-	if [ ! -f "${WG_QUICK}" ]; then
-		echo "wg-quick binary not found. Did you emerge net-vpn/wireguard-tools?"
-		exit 1
-	fi
-	if [ ! -f /etc/wireguard/${interface}.conf ]; then
-		echo "Can't find /etc/wireguard/${interface}.conf. Please ensure this file exists."
-	fi
-	ebegin "Configuring wireguard interface $interface"
-	$WG_QUICK up $interface 2>/dev/null
-	eend $?
+		if [ ! -f "${WG_QUICK}" ]; then
+			echo "wg-quick binary not found. Did you emerge net-vpn/wireguard-tools?"
+			exit 1
+		fi
+		if [ ! -f /etc/wireguard/${interface}.conf ]; then
+			echo "Can't find /etc/wireguard/${interface}.conf. Please ensure this file exists."
+		fi
+		ebegin "Configuring wireguard interface $interface"
+		$WG_QUICK up $interface 2>/dev/null
+		eend $?
 }
 
 stop() {
-	ebegin "Stopping wireguard interface $interface"
-	$WG_QUICK down $interface 2>/dev/null
-	eend $?
+		ebegin "Stopping wireguard interface $interface"
+		$WG_QUICK down $interface 2>/dev/null
+		eend $?
 }
