@@ -6,7 +6,7 @@ pidfile="/var/run/dhclient-${interface}.pid"
 [ -e /etc/conf.d/dhclient ] && source /etc/conf.d/dhclient
 [ ! -d /var/lib/dhcp ] && mkdir -p /var/lib/dhcp
 
-dhclient_defaults="-lf /var/lib/dhcp/dhclient.${interface}.leases -df /var/lib/dhcp/dhclient6.${interface}.leases"
+dhclient_defaults="${dhclient_defaults:--lf /var/lib/dhcp/dhclient.${interface}.leases -df /var/lib/dhcp/dhclient6.${interface}.leases}"
 
 netif_pre_up() {
     if [ ! -f "${binary}" ]; then
@@ -21,7 +21,7 @@ netif_post_up() {
         exit 2
     fi
 
-    $dhclient $dhclient_defaults -pf $pidfile $dhclient_defaults $interface
+    $binary $dhclient_opts -pf $pidfile $dhclient_defaults $interface
 }
 
 netif_pre_down() {
