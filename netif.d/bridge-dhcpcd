@@ -17,7 +17,7 @@ netif_post_up() {
         exit 2
     fi
 
-    binary $interface
+    $binary $interface
 }
 
 netif_pre_up() {
