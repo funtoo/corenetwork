@@ -1,7 +1,7 @@
 #!/bin/sh
 
 command="/usr/sbin/hostapd"
-pidfile="/var/run/hostapd/${interface}.pid"
+pidfile="/run/hostapd/${interface}.pid"
 config="/etc/hostapd/${interface}.conf"
 command_args="-B -P${pidfile} ${config}"
 

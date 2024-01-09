@@ -1,7 +1,7 @@
 #!/bin/sh
 
 binary="/sbin/dhclient"
-pidfile="/var/run/dhclient-${interface}.pid"
+pidfile="/run/dhclient-${interface}.pid"
 
 [ -e /etc/conf.d/dhclient ] && source /etc/conf.d/dhclient
 [ ! -d /var/lib/dhcp ] && mkdir -p /var/lib/dhcp

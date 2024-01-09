@@ -1,7 +1,7 @@
 #!/bin/sh
 
 binary="/usr/sbin/wpa_supplicant"
-pidfile="/var/run/wpa_supplicant/${interface}.pid"
+pidfile="/run/wpa_supplicant/${interface}.pid"
 
 # for CONFIG to work, rc_env_allow in /etc/rc.conf must contain CONFIG in value
 if [ -n "${CONFIG}" ]; then

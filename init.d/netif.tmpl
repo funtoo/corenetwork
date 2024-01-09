@@ -24,7 +24,7 @@ STARTD="Network $DESC2 $CYAN$interface$OFF up"
 STOPD="Network $DESC2 $CYAN$interface$OFF down"
 if [ "$dhcp" = "yes" ]; then
 	DHCPC=${DHCPC:-"/sbin/dhcpcd"}
-	DHCPC_PIDFILE="/var/run/dhcpcd-${interface}.pid"
+	DHCPC_PIDFILE="/run/dhcpcd/${interface}.pid"
 	if [ ! -f "${DHCPC}" ]; then
 		echo "dhcpcd binary not found. Did you emerge net-misc/dhcpcd?"
 		exit 1

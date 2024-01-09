@@ -10,6 +10,6 @@ netif_create() {
 }
 
 netif_destroy() {
-	PID=`head -n1 /var/run/ppp-$interface.pid`
+	PID=`head -n1 /run/ppp-$interface.pid`
 	kill $PID
 }
