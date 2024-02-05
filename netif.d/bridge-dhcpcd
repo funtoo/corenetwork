@@ -30,7 +30,7 @@ netif_pre_up() {
     local bcast
     if [ -n "$slaves" ]; then
         for slave in $(get_interface_names $slaves); do
-            ifconfig ${slave} 0.0.0.0
+            ip link set ${slave} up
             brctl addif $interface ${slave}
         done
     fi
